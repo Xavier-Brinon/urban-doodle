@@ -1,11 +1,11 @@
 {
-    "siteTitle": "My Documentation Project",
-    "siteDescription": "This is the description of my project title",
-    "author": "My",
+    "siteTitle": "Bastide hub",
+    "siteDescription": "This this a blog",
+    "author": "Xavier Brinon",
     "faviconUrl": "/assets/myfavicon.png",
     "blogTitle": "Blog",
-    "blogDescription": "Here is the description of the blog part",
-    "productionUrl": "https://bastidehub.xyz",
+    "blogDescription": "Thoughts gardening",
+    "productionUrl": "https://blog.bastidehub.xyz",
     "customLinks": [
         {
             "url": "/feed.xml",

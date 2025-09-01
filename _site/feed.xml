@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
-    <title>My Documentation Project</title>
-    <subtitle>This is the description of my project title</subtitle>
+    <title>Bastide hub</title>
+    <subtitle>This this a blog</subtitle>
     <link href="feed.xml" rel="self" />
-    <link href="https://bastidehub.xyz/feed.xml" />
+    <link href="https://blog.bastidehub.xyz/feed.xml" />
     <updated>2025-05-15T00:00:00Z</updated>
-    <id>https://bastidehub.xyz/feed.xml</id>
+    <id>https://blog.bastidehub.xyz/feed.xml</id>
     <author>
         <name>11ty LibDoc</name>
     </author>
         <entry>
             <title>Hello Post!</title>
-            <link href="https://bastidehub.xyz/posts/hello-post/" />
+            <link href="https://blog.bastidehub.xyz/posts/hello-post/" />
             <updated>2025-05-15T00:00:00Z</updated>
-            <id>https://bastidehub.xyz/posts/hello-post/</id>
+            <id>https://blog.bastidehub.xyz/posts/hello-post/</id>
             <author>
                 <name>Olivier 3lanc</name>
             </author>
             <content type="html">
                 
                     &lt;img src=&quot;https://images.weserv.nl/?url=https://raw.githubusercontent.com/olivier3lanc/photographies/refs/heads/master/assets/paysages/hiver/foret_sapins_hiver_col_pre_img_4917_size_2560x1706.webp&amp;w=1200&amp;h=600&amp;fit=cover&amp;q=30&amp;output=webp&quot; alt=&quot;Hello Post!&quot;&gt;
-                &lt;p&gt;&lt;img src=&quot;https://bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__730__.webp&quot; alt=&quot;markdown image example&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;2560&quot; height=&quot;1706&quot; srcset=&quot;https://bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__730__.webp 730w, https://bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__1400__.webp 1400w, https://bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__2560__.webp 2560w&quot; sizes=&quot;auto&quot;&gt;&lt;/p&gt;
+                &lt;p&gt;&lt;img src=&quot;https://blog.bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__730__.webp&quot; alt=&quot;markdown image example&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot; width=&quot;2560&quot; height=&quot;1706&quot; srcset=&quot;https://blog.bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__730__.webp 730w, https://blog.bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__1400__.webp 1400w, https://blog.bastidehub.xyz/posts/hello-post/foretsapinshivercolpreimg4917size2560x1706-AoHioz-B7R-__2560__.webp 2560w&quot; sizes=&quot;auto&quot;&gt;&lt;/p&gt;
 &lt;p&gt;Howdy! I am the first blog post of this project. To create content with LibDoc, you can use &lt;a href=&quot;https://eleventy-libdoc.netlify.app/creating-content/markdown/&quot;&gt;markdown&lt;/a&gt;, &lt;a href=&quot;https://eleventy-libdoc.netlify.app/creating-content/inline-html/&quot;&gt;inline HTML&lt;/a&gt; and &lt;a href=&quot;https://eleventy-libdoc.netlify.app/creating-content/widgets/&quot;&gt;widgets&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Learn how to adjust &lt;a href=&quot;https://eleventy-libdoc.netlify.app/creating-content/blogging/&quot;&gt;blog settings&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The image above is also used as &lt;a href=&quot;https://eleventy-libdoc.netlify.app/tags/open-graph-image/&quot;&gt;Open Graph Image&lt;/a&gt;.&lt;/p&gt;
