@@ -12,21 +12,13 @@
             "text": "Atom feed"
         },
         {
-            "url": "https://github.com/Xavier-Brinon/eleventy-libdoc",
+            "url": "https://github.com/Xavier-Brinon/urban-doodle",
             "text": "GitHub"
         },
         {
-            "url": "#",
-            "text": "Bluesky"
-        },
-        {
-            "url": "#",
-            "text": "LinkedIn"
-        },
-        {
-            "url": "#",
-            "text": "CodePen"
+            "url": "https://app.radicle.xyz/nodes/garden.bastidehub.xyz/rad:z3t3uRFQJ5FVuCDhXdQTwj1S5m6Rg",
+            "text": "Radicle"
         }
     ],
-    "editThisPageRootUrl": "https://github.com/Xavier-Brinon/eleventy-libdoc/blob/main"
+    "editThisPageRootUrl": "https://github.com/Xavier-Brinon/urban-doodle/blob/main/hello-world.md"
 }
