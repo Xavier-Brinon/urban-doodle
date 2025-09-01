@@ -1,0 +1,32 @@
+{
+    "siteTitle": "My Documentation Project",
+    "siteDescription": "This is the description of my project title",
+    "author": "My",
+    "faviconUrl": "/assets/myfavicon.png",
+    "blogTitle": "Blog",
+    "blogDescription": "Here is the description of the blog part",
+    "productionUrl": "https://bastidehub.xyz",
+    "customLinks": [
+        {
+            "url": "/feed.xml",
+            "text": "Atom feed"
+        },
+        {
+            "url": "https://github.com/Xavier-Brinon/eleventy-libdoc",
+            "text": "GitHub"
+        },
+        {
+            "url": "#",
+            "text": "Bluesky"
+        },
+        {
+            "url": "#",
+            "text": "LinkedIn"
+        },
+        {
+            "url": "#",
+            "text": "CodePen"
+        }
+    ],
+    "editThisPageRootUrl": "https://github.com/Xavier-Brinon/eleventy-libdoc/blob/main"
+}
