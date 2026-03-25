@@ -5,3 +5,8 @@ node_modules
 _data/envlocal.json
 .env
 /assets/___dummy_content
+
+
+# MCPs and LLM
+.serena
+.claude

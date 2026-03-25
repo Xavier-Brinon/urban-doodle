@@ -40,7 +40,7 @@
 
     <meta name="color-scheme" content="light dark">
 
-    <meta name="generator" content="Eleventy v3.1.2">
+    <meta name="generator" content="Eleventy v3.1.5">
 
     <!-- Font fallback -->
     <style>
@@ -63,7 +63,7 @@
     <link rel="stylesheet" href="/core/assets/css/ds__colors.css">
     <link rel="stylesheet" href="/core/assets/css/ds__dark_mode.css" media="(prefers-color-scheme: dark)" id="libdoc_dark_mode_css">
     <link rel="stylesheet" href="/core/assets/css/hljs/night-owl.css">
-    <link rel="stylesheet" href="/core/assets/fonts/icomoon/style.css">
+    <link rel="stylesheet" href="/core/assets/css/icons.css">
     <style>
         :root {
             --libdoc-image-background-color-light-mode: transparent;
@@ -143,6 +143,7 @@
                 width: `Width`,
         }
         const libdocConfig = {
+            htmlBasePathPrefix: ``,
             blogTitle: `Blog`,
             blogDescription: `Thoughts gardening`,
             displayTagsListLink: true
@@ -270,7 +271,7 @@
             </nav>
         </div>
         <main class="pos-relative" w-100-minus-sidebar="md" w-100="xs,sm">
-            <header class="d-flex fd-column | pt-5 pb-7">
+            <header class="d-flex fd-column | pt-5  mb-7">
                 <nav class="d-flex jc-space-between | pos-relative">
                     <ul class="d-flex ai-center gap-2 | p-0 m-0 | fs-2 lh-3 | ls-none" style="width: calc(100% - 42px)">
     <li class="d-flex ai-center gap-2">
@@ -364,13 +365,13 @@
                         
                             <p class="d-flex ai-center gap-2 | m-0 pr-2 | fvs-wght-400 fs-3 lsp-3 lh-3 | c-neutral-700 bc-primary-100" fs-2="xs">
                                 <span class="icon-calendar-dots fs-6"></span>
-                                <span ws-nowrap="sm,md">
+                                <time ws-nowrap="sm,md">
                                     
                                     
                                         
-                                        2025-08-30
+                                        2025-09-01
                                     
-                                </span>
+                                </time>
                             </p>
                         
                         <div class="pl-5 w-100 | bbwidth-1 bbstyle-dashed bcolor-neutral-500"></div>
@@ -399,12 +400,12 @@
                         
                     <ol class="cgap-3em | m-0 pl-0 pb-5 o-auto | lh-1 | ls-none bwidth-1 bstyle-dashed bcolor-neutral-500 btwidth-0 brwidth-0" d-flex="xs,sm" fd-column="xs,sm" fw-wrap="xs,sm" columns-3="md" columns-2="sm" maxh-300px="sm" maxh-200px="xs">
                         <li class="d-flex">
-                            <a href="#lets-start" class="pl-5 pt-1 pb-1 | fs-4 lsp-3 lh-5 fvs-wght-400 | blwidth-1 blstyle-dashed bcolor-neutral-500">
+                            <a href="#let-s-start" class="pl-5 pt-1 pb-1 | fs-4 lsp-3 lh-5 fvs-wght-400 wb-break-word | blwidth-1 blstyle-dashed bcolor-neutral-500">
                                 Let’s start!
                             </a>
                         </li>
                         <li class="d-flex">
-                            <a href="#get-help" class="pl-5 pt-1 pb-1 | fs-4 lsp-3 lh-5 fvs-wght-400 | blwidth-1 blstyle-dashed bcolor-neutral-500">
+                            <a href="#get-help" class="pl-5 pt-1 pb-1 | fs-4 lsp-3 lh-5 fvs-wght-400 wb-break-word | blwidth-1 blstyle-dashed bcolor-neutral-500">
                                 Get help
                             </a>
                         </li></ol>
@@ -427,8 +428,8 @@ It seems to be the beginning of a great documentation story!
 </div>
 </aside>
 
-                        <h2 id="lets-start" pl-9="xs,sm">
-                            <a href="#lets-start" title="Let’s start!" class="pos-absolute top-50 left-0 t-tY-50 | p-4 ml-1 | td-none | brad-4 bc-neutral-100 bwidth-1 bstyle-dashed bcolor-neutral-500 __hover-1 __soft-shadow" ml-3="xs,sm">
+                        <h2 id="let-s-start" pl-9="xs,sm">
+                            <a href="#let-s-start" title="Let’s start!" class="pos-absolute top-50 left-0 t-tY-50 | p-4 ml-1 | td-none | brad-4 bc-neutral-100 bwidth-1 bstyle-dashed bcolor-neutral-500 __hover-1 __soft-shadow" ml-3="xs,sm">
                                 <span class="icon-link-simple | pos-absolute top-50 left-50 t-tY-50 t-tX-50 | fs-4"></span>
                             </a>
                     Let’s start!</h2>
@@ -483,7 +484,7 @@ It seems to be the beginning of a great documentation story!
                     <div class="w-100" d-none="sm,md"></div>
                     <div class="pl-5 | bbwidth-1 bbstyle-dashed bcolor-neutral-500" w-100="sm,md"></div>
                     <a href="https://github.com/ita-design-system/eleventy-libdoc" target="_blank" class="d-flex ai-center gap-2 | pl-2 pr-2 | fvs-wght-400 fs-2 lsp-3 lh-3 td-none ws-nowrap">
-                        11ty LibDoc 0.10.0
+                        11ty LibDoc 0.14.6
                     </a>
                 </nav>
             </footer>
