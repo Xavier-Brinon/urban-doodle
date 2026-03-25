@@ -1,10 +1,11 @@
 {
   "name": "my-eleventy-libdoc",
-  "version": "0.10.0",
+  "version": "0.14.6",
   "description": "An Eleventy starter project to craft slick and responsive documentation",
   "main": "index.js",
   "scripts": {
-    "build": "npx @11ty/eleventy"
+    "build": "npx @11ty/eleventy",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
