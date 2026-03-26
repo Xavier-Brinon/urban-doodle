@@ -1,0 +1,37 @@
+#+title: Weekend Woodworking
+#+description: Building a bookshelf from reclaimed oak
+#+date: [2026-03-21 Sat]
+:PROPERTIES:
+:tags: post, woodworking, diy
+:author: Xavier Brinon
+:END:
+
+* Materials
+
+- 4 planks of reclaimed oak (200cm x 30cm)
+- Wood glue
+- 12 brass screws
+
+* The build process
+
+I started by *sanding* the planks to remove the old finish.
+Then I /carefully/ measured and cut them to size.
+
+Here is the ~cut-list.py~ script I used:
+
+#+begin_src python
+def cut_list(total_length, pieces):
+    return [total_length / p for p in pieces]
+#+end_src
+
+#+begin_quote
+Measure twice, cut once.
+— Every woodworker ever
+#+end_quote
+
+** Assembly
+
+The joints were secured with [[https://example.com/brass-screws][brass screws]].
+
+#+caption: The finished shelf
+[[./images/shelf.jpg]]

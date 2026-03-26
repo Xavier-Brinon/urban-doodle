@@ -1,0 +1,226 @@
+#+title: Plan: Org-mode Content Authoring Pipeline
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:2 num:t ^:{}
+
+* Source PRD
+
+Radicle issue =f0b8f752ce236b80f832eb714b083535d067ba6b=
+
+* Architectural Decisions
+
+Durable decisions that apply across all phases:
+
+- Pipeline flow :: =content/**/*.org= \rarr{} =[convert-org.js + pandoc]=
+  \rarr{} =generated/**/*.md= \rarr{} =[eleventy]= \rarr{} =_site/=
+- Source directory :: =content/= with subdirectories per content type (=posts/=,
+  =profile/=)
+- Output directory :: =generated/= (gitignored, never committed)
+- Org metadata format :: =#+title=, =#+description=, =#+date= as org keywords;
+  all other fields in =:PROPERTIES:= drawer
+- Date format :: Org inactive timestamps (=[2026-03-21 Sat]=) converted to ISO
+  strings (=2026-03-21=)
+- Tags format :: Comma-separated in =:PROPERTIES:= drawer (=:tags: post,
+  woodworking=), split into YAML list
+- Conversion tool :: Pandoc (swappable to Emacs batch mode later via wrapper
+  module)
+- Rebuild strategy :: Full rebuild every run (Phase 1); content-hash incremental
+  in the future
+- LibDoc unchanged :: No modifications to LibDoc templates, filters, or
+  shortcodes
+- Shortcodes :: Liquid tags written verbatim in org files (Phase 1); org-native
+  mapping via Lua filters in the future
+- Directory defaults :: =posts.json= and =profile.json= set =layout=,
+  =permalink=, and default =tags= per content type
+- Conversion script :: Node.js, four pure-core modules plus one orchestrator
+- Module interfaces ::
+  - Org metadata parser: org string \rarr{} ={keywords, properties, body}=
+  - YAML frontmatter generator: metadata object \rarr{} YAML string
+  - Pandoc wrapper: org body string \rarr{} Markdown string
+  - File assembler: frontmatter string + body string \rarr{} complete =.md= string
+
+* Phase 1: Tracer bullet --- single org file to built HTML page
+
+Radicle issue =3731f0843eea0023b8a1e947aef3db1dc60fff74=
+
+User stories: 1, 2, 3, 4, 5, 15, 17
+
+** What to build
+
+The thinnest possible end-to-end path through the conversion pipeline. One
+=.org= file with =#+title=, =#+description=, =#+date= keywords and a
+=:PROPERTIES:= drawer (tags, author) is converted to a valid =.md= file with
+YAML frontmatter that Eleventy builds into an HTML page.
+
+All four core modules are built and tested in this phase:
+- Org metadata parser (keyword extraction, property drawer parsing,
+  inactive timestamp conversion, comma-separated tag splitting)
+- YAML frontmatter generator (string, date, and array values)
+- Pandoc wrapper (org body to Markdown via =child_process=)
+- File assembler (frontmatter + body into complete =.md=)
+
+The pipeline orchestrator is NOT part of this phase --- conversion runs on a
+single file. Directory structure, build commands, and =.gitignore= come in
+Phase 2.
+
+** Acceptance criteria
+
+- [X] Org metadata parser extracts =#+title=, =#+description=, =#+date= from org keywords
+- [X] Org metadata parser parses =:PROPERTIES:= drawer key-value pairs
+- [X] Org metadata parser converts =[2026-03-21 Sat]= to =2026-03-21=
+- [X] Org metadata parser splits comma-separated tags into arrays
+- [X] Org metadata parser handles missing optional fields gracefully
+- [X] Org metadata parser returns body content separately from metadata
+- [X] YAML frontmatter generator produces valid YAML with =---= delimiters
+- [X] YAML frontmatter generator handles string, date, and array values
+- [X] YAML frontmatter generator omits undefined/null fields
+- [X] Pandoc wrapper converts org headings, paragraphs, lists, links, images, bold, italic, and code to Markdown
+- [X] File assembler combines frontmatter and body into a complete =.md=
+- [X] File assembler handles empty body and empty frontmatter edge cases
+- [X] A single =.org= test file passes through all four modules and produces a =.md= that Eleventy builds into valid HTML
+- [X] All modules have unit tests using realistic org content as fixtures
+
+* Phase 2: Directory structure, data files, and build commands
+
+Radicle issue =d8c9067377ba4ce7fdca02f87d6d0a9059f3d1f8=
+
+User stories: 6, 8, 9, 10, 11, 12, 13
+
+** What to build
+
+The pipeline orchestrator and project scaffolding that turns the single-file
+conversion from Phase 1 into a full build pipeline.
+
+Author places =.org= files in =content/posts/= or =content/= root. Running =npm
+run build= converts all =.org= files to =.md= in =generated/=, copies directory
+data files (=.json=), then runs Eleventy on the generated output. The site
+builds successfully.
+
+Specifically:
+- Pipeline orchestrator (=scripts/convert-org.js=) that globs
+  =content/**/*.org=, runs each through the four core modules, mirrors the
+  directory structure into =generated/=
+- Directory data files: =content/posts/posts.json= with Eleventy defaults
+  (layout, permalink, tags)
+- =.json= file copying from =content/= to =generated/=
+- =generated/= added to =.gitignore=
+- =content/= added to =.eleventyignore=
+- Eleventy configured to also look in =generated/= for input
+- =package.json= build commands updated:
+  - =convert=: =node scripts/convert-org.js=
+  - =build=: =npm run convert && npx @11ty/eleventy=
+  - =dev=: =npm run convert && npx @11ty/eleventy --serve=
+
+** Acceptance criteria
+
+- [ ] =content/= directory exists with =posts/= subdirectory
+- [ ] =content/posts/posts.json= sets layout and permalink defaults
+- [ ] Pipeline orchestrator finds all =.org= files in =content/=
+- [ ] Pipeline orchestrator mirrors directory structure in =generated/=
+- [ ] Pipeline orchestrator copies =.json= data files to =generated/=
+- [ ] =generated/= is gitignored
+- [ ] =npm run convert= produces =.md= files in =generated/= from =.org= sources
+- [ ] =npm run build= runs conversion then Eleventy, producing =_site/=
+- [ ] =npm run dev= runs conversion then serves with Eleventy dev server
+- [ ] Eleventy processes =generated/= content correctly
+- [ ] Integration tests verify orchestrator handles multiple files and subdirectories
+
+* Phase 3: Liquid shortcode pass-through and org block conversion
+
+Radicle issue =5775982dd196c4cb217401066867e364e536e531=
+
+User stories: 7, 18, 19
+
+** What to build
+
+Verify and test that Liquid shortcodes and org-specific blocks survive the
+org-to-Markdown conversion pipeline intact.
+
+An org file containing Liquid tags (={% alert %}=, ={% sandbox %}=, ={% iconCard
+%}=), org quote blocks (=#+begin_quote=), and org source blocks (=#+begin_src=)
+is converted to Markdown where Liquid tags are preserved verbatim and org blocks
+are mapped to their Markdown equivalents. Eleventy processes the resulting =.md=
+file and renders the shortcodes correctly.
+
+This phase adds no new modules --- it exercises the Pandoc wrapper and adds
+targeted tests for edge cases around shortcode preservation and block
+conversion.
+
+** Acceptance criteria
+
+- [ ] Liquid tags (={% alert 'msg', 'success', 'Title' %}=) pass through unchanged
+- [ ] Paired Liquid tags (={% sandbox %}...{% endsandbox %}=) pass through with content intact
+- [ ] Org quote blocks (=#+begin_quote=) convert to Markdown blockquotes
+- [ ] Org source blocks (=#+begin_src language=) convert to fenced code blocks with language specifiers
+- [ ] Liquid tags inside org content do not get escaped or modified by Pandoc
+- [ ] An org file using all shortcode types produces valid HTML after full pipeline
+- [ ] Tests cover each shortcode type and block type with realistic content fixtures
+
+* Phase 4: Migrate demo content from Markdown to org-mode
+
+Radicle issue =84a3b8c184545ccebfa6388fb9b8d1eb05597667=
+
+User stories: 14
+
+** What to build
+
+Convert all existing demo Markdown files to org-mode format in the =content/=
+directory and remove the original =.md= files. The site builds identically from
+org sources as it did from Markdown sources.
+
+Files to migrate:
+- =hello-world.md= \rarr{} =content/hello-world.org= (home page)
+- =hello-post.md= \rarr{} =content/posts/hello-post.org=
+- =hello-page.md= \rarr{} =content/hello-page.org=
+- =hello-child.md= \rarr{} =content/hello-child.org=
+- =hello-grandchild.md= \rarr{} =content/hello-grandchild.org=
+
+Each migrated file uses =#+title=, =#+description=, =#+date= keywords and a
+=:PROPERTIES:= drawer for LibDoc-specific fields. Liquid shortcodes in the
+original files are preserved verbatim.
+
+** Acceptance criteria
+
+- [ ] All five demo =.md= files have org equivalents in =content/=
+- [ ] Posts are in =content/posts/=, other pages in =content/= root
+- [ ] Org files use =#+title=, =#+description=, =#+date= for standard metadata
+- [ ] Org files use =:PROPERTIES:= drawer for tags, author, ogImageUrl, eleventyNavigation
+- [ ] Org inactive timestamps used for dates
+- [ ] Liquid shortcodes from original files preserved verbatim
+- [ ] Original =.md= files removed from project root
+- [ ] =npm run build= produces =_site/= with same pages as before migration
+- [ ] All pages render correctly (navigation, breadcrumbs, blog index, tags)
+
+* Phase 5: Profile Page support
+
+Radicle issue =bf31ef41543da26a8b1282d4b7de9ec6b3abb4ac=
+
+User stories: 20
+
+** What to build
+
+Add support for Profile Pages --- static personal content (resume, about, book
+list) authored in org-mode under =content/profile/=.
+
+An org file in =content/profile/= is converted to =.md= in =generated/profile/=,
+picks up defaults from =profile.json= (layout, permalink pattern), and Eleventy
+builds it into an HTML page accessible from the header navigation.
+
+Specifically:
+- =content/profile/= directory with =profile.json= setting Eleventy defaults
+- At least one example Profile Page demonstrating the authoring format
+- The Profile Page is reachable via a Custom Link in =settings.json=
+- The page renders correctly through LibDoc's layout
+
+** Acceptance criteria
+
+- [ ] =content/profile/= directory exists with =profile.json=
+- [ ] =profile.json= sets appropriate layout and permalink defaults
+- [ ] An example Profile Page org file exists in =content/profile/=
+- [ ] The org file converts to =.md= in =generated/profile/= via the pipeline
+- [ ] Eleventy builds the Profile Page into =_site/= at the correct URL
+- [ ] The page is linked from the header via =customLinks= in =settings.json=
+- [ ] The page renders correctly with LibDoc's layout
+- [ ] The Profile Page does not appear in the Sidebar navigation
+- [ ] The Profile Page does not appear in the blog index

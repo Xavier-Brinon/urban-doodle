@@ -1,0 +1,82 @@
+#+title: Lessons from Org Pipeline Implementation
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:2 num:nil ^:{}
+
+* Eleventy and LibDoc Pipeline
+
+- LibDoc's content pipeline is: =.md= file \rarr{} YAML frontmatter \rarr{}
+  Liquid shortcode expansion \rarr{} markdown-it rendering \rarr{} HTML filters
+  (cleanup, autoids) \rarr{} Layout wrapping \rarr{} output. The conversion
+  script slots in /before/ this pipeline, not inside it.
+- Eleventy navigation (0.x to 1.x) and plugin-rss (2.x to 3.x) both jumped major
+  versions to align with Eleventy 3's move to ESM. The old CommonJS versions
+  still worked via compatibility layer, but native ESM is cleaner for a =type:
+  module= project.
+
+* Pure Core / Imperative Shell
+
+- The conversion script follows the pure core / imperative shell pattern:
+  modules 1 (parser), 2 (frontmatter generator), and 4 (assembler) are pure
+  functions with no I/O. Module 3 (Pandoc wrapper) is the only one with side
+  effects. This makes 3 out of 4 modules trivially unit-testable without mocks.
+- Pure modules run in <2ms total. Pandoc wrapper tests take ~70-125ms each
+  because they spawn a child process. This performance gap is why the module
+  boundary matters --- the orchestrator can batch or parallelize Pandoc calls
+  without touching the pure modules.
+
+* Pandoc Specifics
+
+- =--wrap=none= flag is essential. Without it, Pandoc hard-wraps lines at 72
+  characters, which can break inline formatting mid-word. Markdown renderers and
+  Eleventy don't care about line length.
+- Pandoc treats ={% ... %}= (Liquid tags) as plain text and passes them through
+  unchanged from org to Markdown. This is what makes Phase 1's "verbatim
+  shortcodes" approach work with zero custom scripting.
+- Pandoc's =gfm= (GitHub-flavoured Markdown) output format is the best target
+  because it supports fenced code blocks with language specifiers, which map
+  directly to org source blocks.
+
+* Org-mode Metadata Design
+
+- Org =#+keyword:= lines only reliably map title, author, and date to Pandoc's
+  internal metadata model. Custom fields like description and tags need
+  extraction by our own parser.
+- The =:PROPERTIES:= drawer is the org-native way to handle arbitrary key-value
+  metadata. It has a rigid, predictable format that's trivial to parse with
+  regex.
+- Org inactive timestamps =[2026-03-21 Sat]= include the day name, which must be
+  stripped for ISO date output. The day name is informational only --- org
+  computes it from the date.
+
+* Node.js Test Runner
+
+- Node.js 18+ ships with =node:test= --- a built-in test runner that needs no
+  npm packages (no Jest, Vitest, or Mocha). For small projects, this avoids dev
+  dependency bloat. Run with =node --test test/**/*.test.js=.
+
+* Domain Model Lessons
+
+- "Page" is overloaded three ways in this project: Page (sidebar-navigated
+  content), Profile Page (header-navigated static content), and generic HTML
+  output. The ubiquitous language glossary resolves this by reserving
+  capitalised *Page* for sidebar content.
+- Posts are the primary content type (blog-first site). Tags are the reader's
+  primary discovery mechanism across hobby topics. This elevates Tags from a
+  secondary feature to a core UX element.
+- The home page is the blog index (a System Page), not a distinct content type.
+  This was a conscious simplification --- a landing page can be added later.
+
+* Architecture Decisions
+
+- The org pipeline is a thin seam between two independent systems (org-mode
+  authoring and LibDoc/Eleventy). Neither side knows about the other. This means
+  LibDoc can be updated independently, and the conversion tool can be swapped
+  (Pandoc \rarr{} Emacs batch mode) without touching LibDoc.
+- Private content (French, auth-gated) and code hosting (Fossil SCM) are
+  separate bounded contexts with separate deploys. They don't belong in this
+  project's domain model.
+- Directory data files (=posts.json=, =profile.json=) eliminate per-file
+  boilerplate for layout and permalink. These are infrastructure, not content
+  metadata.

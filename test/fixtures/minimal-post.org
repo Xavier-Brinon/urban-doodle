@@ -1,0 +1,3 @@
+#+title: Minimal Post
+
+Just a paragraph with no optional fields.
