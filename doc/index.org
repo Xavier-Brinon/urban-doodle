@@ -1,0 +1,29 @@
+#+title: Documentation Index
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:nil num:nil ^:{}
+
+* Tutorials
+
+Learning-oriented, guided hands-on experiences.
+
+- [[file:tutorials/tutorial_nixpacks_first_build.org][Your First Nixpacks Build]] --- build an OCI image without a Containerfile
+
+* How-to Guides
+
+Task-oriented, practical steps to accomplish a goal.
+
+- [[file:howto/howto_add_system_dependency.org][Add a System Dependency to a Nixpacks Build]] --- install Pandoc, FFmpeg, etc.
+
+* Reference
+
+Information-oriented, precise technical descriptions.
+
+- [[file:reference/ref_nixpacks_toml.org][nixpacks.toml Configuration]] --- all fields, types, and options
+
+* Explanation
+
+Understanding-oriented, context and rationale.
+
+- [[file:explanation/explanation_nixpacks_phases.org][How Nixpacks Phases and Auto-detection Work]] --- the mental model behind Nixpacks

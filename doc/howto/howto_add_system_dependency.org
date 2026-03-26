@@ -1,0 +1,98 @@
+#+title: How to Add a System Dependency to a Nixpacks Build
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Goal
+
+Add a system-level package (e.g. Pandoc, FFmpeg, ImageMagick) to a
+Nixpacks build so it is available during the build phase and
+optionally in the final image.
+
+* Prerequisites
+
+- A project with a =nixpacks.toml= file (or willingness to create one)
+- Knowledge of the Nix package name for the dependency (see Steps)
+
+* Steps
+
+** Find the Nix package name
+
+Search the [[https://search.nixos.org/packages][Nix package index]].
+
+Common mappings:
+
+| Tool         | Nix package name |
+|--------------+------------------|
+| Pandoc       | =pandoc=         |
+| FFmpeg       | =ffmpeg=         |
+| ImageMagick  | =imagemagick=    |
+| PostgreSQL   | =postgresql_16=  |
+| Redis        | =redis=          |
+| Python 3.11  | =python311=      |
+| Node.js 20   | =nodejs-20_x=    |
+| Git          | =git=            |
+
+** Add the package to =nixpacks.toml=
+
+Create or edit =nixpacks.toml= at the project root:
+
+#+begin_src toml
+[phases.setup]
+nixPkgs = ["pandoc"]
+#+end_src
+
+For multiple packages:
+
+#+begin_src toml
+[phases.setup]
+nixPkgs = ["pandoc", "ffmpeg", "imagemagick"]
+#+end_src
+
+** If the package is not in Nix, use apt
+
+Some packages are easier to find via apt:
+
+#+begin_src toml
+[phases.setup]
+nixPkgs = ["pandoc"]
+aptPkgs = ["libvips-dev"]
+#+end_src
+
+=nixPkgs= and =aptPkgs= can be mixed in the same setup phase.
+
+** Rebuild
+
+#+begin_src bash
+nixpacks build . --name my-app
+#+end_src
+
+The setup phase will now include your package alongside
+auto-detected dependencies.
+
+* Verification
+
+Verify the package is available in the built image (Nixpacks
+delegates to Podman via the Docker-compatible socket):
+
+#+begin_src bash
+podman run --rm my-app pandoc --version
+#+end_src
+
+Replace =pandoc --version= with the appropriate version command for
+your package.
+
+* Troubleshooting
+
+| Problem                        | Solution                                                   |
+|--------------------------------+------------------------------------------------------------|
+| Package name not found in Nix  | Search [[https://search.nixos.org/packages][Nix package index]] for the exact name |
+| Package installs but wrong ver | Pin the version: =nixPkgs = ["nodejs-20_x"]= instead of =nodejs= |
+| Package too large for image    | Consider a multi-stage approach with =onlyIncludeFiles=    |
+| Build works, runtime fails     | The package might need =nixLibraries= for shared libs      |
+
+* See Also
+
+- [[file:../reference/ref_nixpacks_toml.org][Reference: nixpacks.toml Configuration]]
+- [[file:../explanation/explanation_nixpacks_phases.org][Explanation: How Nixpacks Phases and Auto-detection Work]]

@@ -1,0 +1,232 @@
+#+title: Tutorial: Your First Nixpacks Build
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* What You Will Learn
+
+By the end of this tutorial, you will have:
+
+- Built an OCI image from a Node.js project without writing a Containerfile
+- Observed how Nixpacks auto-detects your project type
+- Added a system dependency (Pandoc) to the build
+- Verified the built output inside the image
+
+All examples use the urban-doodle Eleventy blog project as the source.
+
+* Prerequisites
+
+- Podman installed and running (=brew install podman= on macOS)
+- Nixpacks CLI installed (=brew install nixpacks= on macOS)
+- The urban-doodle repository cloned locally
+
+Nixpacks talks to Docker by default. To use Podman, start the Podman
+machine and point Nixpacks at its socket:
+
+#+begin_src bash
+  podman machine start
+#+end_src
+
+If the machine is already running, you will see an "already running"
+message --- that is fine.
+
+Now set the =DOCKER_HOST= variable so Nixpacks finds Podman:
+
+#+begin_src bash
+export DOCKER_HOST="unix://$(podman machine inspect \
+  --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+#+end_src
+
+You can add this export to your =~/.zshrc= to make it permanent.
+
+* Step 1: Generate a Build Plan Without Building
+
+Before building anything, ask Nixpacks what it /would/ do. From the
+project root:
+
+#+begin_src bash
+  nixpacks plan .
+#+end_src
+
+#+begin_example
+{
+  "providers": [],
+  "buildImage": "ghcr.io/railwayapp/nixpacks:ubuntu-1745885067",
+  "variables": {
+    "CI": "true",
+    "NIXPACKS_METADATA": "node",
+    "NODE_ENV": "production",
+    "NPM_CONFIG_PRODUCTION": "false"
+  },
+  "phases": {
+    "build": {
+      "dependsOn": ["install"],
+      "cmds": ["npm run build"],
+      "cacheDirectories": ["node_modules/.cache"]
+    },
+    "install": {
+      "dependsOn": ["setup"],
+      "cmds": ["npm ci"],
+      "cacheDirectories": ["/root/.npm"],
+      "paths": ["/app/node_modules/.bin"]
+    },
+    "setup": {
+      "nixPkgs": ["nodejs_18", "npm-9_x"],
+      "nixLibs": ["gcc-unwrapped"],
+      "nixOverlays": ["https://github.com/railwayapp/nix-npm-overlay/..."],
+      "nixpkgsArchive": "ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7"
+    }
+  }
+}
+#+end_example
+
+You will notice that Nixpacks found =package.json=, identified this
+as a Node.js project, and planned to run =npm ci= then =npm run
+build=. You did not tell it any of this. The key fields to read are:
+
+- =phases.setup.nixPkgs= --- what system packages will be installed
+  (Node.js 18 and npm 9)
+- =phases.install.cmds= --- how dependencies are installed (=npm ci=)
+- =phases.build.cmds= --- how the project is built (=npm run build=)
+- =variables= --- environment variables set during build
+  (=NODE_ENV=production=)
+
+The other fields (=nixOverlays=, =nixpkgsArchive=, =nixLibs=) are
+Nixpacks internals for reproducible Nix package resolution.
+
+* Step 2: Build the Image
+
+Now build an OCI image. Since this is a static site with no server
+process, add the =--no-error-without-start= flag to tell Nixpacks
+that a missing =start= script is expected:
+
+#+begin_src bash
+nixpacks build . --name urban-doodle --no-error-without-start
+#+end_src
+
+#+begin_example
+╔═════ Nixpacks v1.41.0 ═════╗
+║ setup      │ nodejs_18     ║
+║────────────────────────────║
+║ install    │ npm ci        ║
+║────────────────────────────║
+║ build      │ npm run build ║
+║────────────────────────────║
+║ start      │               ║
+╚════════════════════════════╝
+...
+==> Successfully built image: urban-doodle
+#+end_example
+
+You will notice the output mirrors the plan from Step 1. Nixpacks
+executed each phase in order: setup \rarr{} install \rarr{} build.
+
+The =start= field is empty because this is a static site --- there is
+no server to run. The built =_site/= directory is inside the image.
+
+* Step 3: Inspect What Was Built
+
+Check the image exists:
+
+#+begin_src bash
+podman images urban-doodle
+#+end_src
+
+#+begin_example
+REPOSITORY     TAG       IMAGE ID       CREATED         SIZE
+urban-doodle   latest    a1b2c3d4e5f6   2 minutes ago   385MB
+#+end_example
+
+Verify the built site is inside the image:
+
+#+begin_src bash
+podman run --rm urban-doodle ls /app/_site/
+#+end_src
+
+#+begin_example
+assets  core  feed.xml  hello-page  index.html  posts
+search  tags
+#+end_example
+
+The Eleventy output is at =/app/_site/= inside the image.
+
+* Step 4: Add a System Dependency
+
+Now add Pandoc to the build. Create =nixpacks.toml= at the project
+root:
+
+#+begin_src toml
+# nixpacks.toml
+[phases.setup]
+nixPkgs = ["pandoc"]
+#+end_src
+
+Run =nixpacks plan .= again to see what changed:
+
+#+begin_src bash
+nixpacks plan .
+#+end_src
+
+Compare the =setup= phase. Before, it was:
+
+#+begin_example
+"nixPkgs": ["nodejs_18", "npm-9_x"]
+#+end_example
+
+Now it is:
+
+#+begin_example
+"nixPkgs": ["pandoc"]
+#+end_example
+
+Pandoc appears alongside the auto-detected Node.js packages (which
+Nixpacks still installs via its overlay). Your two-line config
+/merged with/ the auto-detected plan --- it did not replace it.
+
+Now rebuild:
+
+#+begin_src bash
+nixpacks build . --name urban-doodle --no-error-without-start
+#+end_src
+
+* Step 5: Verify Pandoc Is Available in the Image
+
+#+begin_src bash
+podman run --rm urban-doodle pandoc --version
+#+end_src
+
+#+begin_example
+pandoc 3.1.11.1
+Compiled with pandoc-types ...
+#+end_example
+
+Pandoc is installed and available during the build and in the final
+image.
+
+* What You Built
+
+You built an OCI image from a Node.js/Eleventy project using only
+two lines of configuration. Nixpacks auto-detected the project type,
+installed dependencies, ran the build, and packaged the result. You
+then added a system dependency (Pandoc) without writing a
+Containerfile.
+
+The key insight: *Nixpacks generates the build instructions for you
+based on what it finds in your source code.* You only configure what
+the auto-detection can't infer.
+
+* Troubleshooting
+
+| Problem                        | Solution                                          |
+|--------------------------------+---------------------------------------------------|
+| "No start command could be found" | Add =--no-error-without-start= for static sites |
+| "already running" on machine start | Ignore --- the machine is ready                |
+| Nix cache download failures   | Transient network issue; retry after a few minutes |
+| "Cannot connect to Docker"    | Ensure =DOCKER_HOST= points to Podman socket      |
+
+* Next Steps
+
+- [[file:../howto/howto_add_system_dependency.org][How to: Add a System Dependency to a Nixpacks Build]]
+- [[file:../explanation/explanation_nixpacks_phases.org][Explanation: How Nixpacks Phases and Auto-detection Work]]
+- [[file:../reference/ref_nixpacks_toml.org][Reference: nixpacks.toml Configuration]]

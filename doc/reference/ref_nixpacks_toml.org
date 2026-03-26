@@ -1,0 +1,167 @@
+#+title: nixpacks.toml --- Reference
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Overview
+
+=nixpacks.toml= is the configuration file for Nixpacks builds. It is
+placed at the project root. All sections are optional --- Nixpacks
+auto-detects sensible defaults from the project source.
+
+Settings in =nixpacks.toml= /merge with/ auto-detected values. They
+do not replace them unless explicitly overriding a phase.
+
+* Providers
+
+#+begin_src toml
+providers = ["node"]
+#+end_src
+
+| Field       | Type       | Description                                       |
+|-------------+------------+---------------------------------------------------|
+| =providers= | =string[]= | Explicit provider list. Overrides auto-detection. |
+
+Auto-detected providers by file presence:
+
+| File                 | Provider |
+|----------------------+----------|
+| =package.json=       | =node=   |
+| =requirements.txt=   | =python= |
+| =go.mod=             | =go=     |
+| =Cargo.toml=         | =rust=   |
+| =Gemfile=            | =ruby=   |
+| =composer.json=      | =php=    |
+
+* Variables
+
+#+begin_src toml
+[variables]
+NODE_ENV = "production"
+PORT = "3000"
+#+end_src
+
+| Field | Type              | Description                               |
+|-------+-------------------+-------------------------------------------|
+| =key= | =string = string= | Environment variable set in the final image |
+
+Variables are available during build and at runtime.
+
+* Phases
+
+Phases execute in order: setup \rarr{} install \rarr{} build. Custom
+phases can be inserted with =dependsOn=.
+
+** Setup phase
+
+#+begin_src toml
+[phases.setup]
+nixPkgs = ["pandoc", "ffmpeg"]
+aptPkgs = ["libvips-dev"]
+nixLibraries = ["zlib", "libpng"]
+#+end_src
+
+| Field           | Type       | Description                              |
+|-----------------+------------+------------------------------------------|
+| =nixPkgs=       | =string[]= | Nix packages to install                  |
+| =aptPkgs=       | =string[]= | Apt packages to install                  |
+| =nixLibraries=  | =string[]= | Nix libraries (shared libs for linking)  |
+
+** Install phase
+
+#+begin_src toml
+[phases.install]
+cmds = ["npm ci --frozen-lockfile"]
+cacheDirectories = ["node_modules", ".yarn/cache"]
+dependsOn = ["setup"]
+onlyIncludeFiles = ["package.json", "package-lock.json"]
+#+end_src
+
+| Field               | Type       | Description                                    |
+|---------------------+------------+------------------------------------------------|
+| =cmds=              | =string[]= | Commands to run (replaces auto-detected)       |
+| =cacheDirectories=  | =string[]= | Directories cached between builds              |
+| =dependsOn=         | =string[]= | Phases that must complete first                |
+| =onlyIncludeFiles=  | =string[]= | Files available in this phase (glob patterns)  |
+
+** Build phase
+
+#+begin_src toml
+[phases.build]
+cmds = ["npm run build"]
+cacheDirectories = [".next/cache"]
+dependsOn = ["install"]
+onlyIncludeFiles = ["dist/*", "public/*"]
+#+end_src
+
+Same fields as install phase.
+
+** Custom phases
+
+#+begin_src toml
+[phases.convert]
+dependsOn = ["install"]
+cmds = ["node scripts/convert-org.js"]
+
+[phases.build]
+dependsOn = ["convert"]
+cmds = ["npx @11ty/eleventy"]
+#+end_src
+
+Custom phases are inserted into the pipeline via =dependsOn=. They
+accept the same fields as install and build.
+
+* Start
+
+#+begin_src toml
+[start]
+cmd = "node dist/server.js"
+runImage = "debian:bullseye-slim"
+onlyIncludeFiles = ["dist/*", "node_modules/*"]
+user = "1000"
+#+end_src
+
+| Field              | Type     | Description                                      |
+|--------------------+----------+--------------------------------------------------|
+| =cmd=              | =string= | Command to run when container starts             |
+| =runImage=         | =string= | Base image for the runtime stage                 |
+| =onlyIncludeFiles= | =string[]= | Files copied to the final image (glob patterns) |
+| =user=             | =string= | UID to run the container as                      |
+
+* Build Image
+
+#+begin_src toml
+buildImage = "ghcr.io/railwayapp/nixpacks:debian"
+#+end_src
+
+| Field        | Type     | Description                            |
+|--------------+----------+----------------------------------------|
+| =buildImage= | =string= | Override the base image for build stages |
+
+* Static Sites
+
+For static site generators (Eleventy, Hugo, Gatsby), the =start= phase
+typically runs a web server. If Dokploy/Railway handles serving via
+Nginx, the =start= section may not be needed --- the hosting platform
+configures it.
+
+* Full Example
+
+#+begin_src toml
+# nixpacks.toml — urban-doodle blog
+
+[phases.setup]
+nixPkgs = ["pandoc"]
+
+[variables]
+NODE_ENV = "production"
+#+end_src
+
+This is the minimal config for the urban-doodle project. Everything
+else is auto-detected from =package.json=.
+
+* See Also
+
+- [[file:../howto/howto_add_system_dependency.org][How to: Add a System Dependency]]
+- [[file:../explanation/explanation_nixpacks_phases.org][Explanation: How Nixpacks Phases Work]]

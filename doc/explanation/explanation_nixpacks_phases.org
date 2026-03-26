@@ -1,0 +1,286 @@
+#+title: How Nixpacks Phases and Auto-detection Work
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Introduction
+
+Nixpacks replaces Containerfiles (Dockerfiles) for most projects by
+/inferring/ how to build your application from its source code.
+Understanding how this inference works --- and where it stops --- is
+the key to using Nixpacks effectively.
+
+This explanation covers two connected ideas: the phase-based build
+model and the provider-based auto-detection system.
+
+* Why Nixpacks Exists
+
+Writing Containerfiles is tedious and error-prone. For a Node.js
+project, you need to:
+
+1. Choose a base image
+2. Copy =package.json= first (for layer caching)
+3. Run =npm ci=
+4. Copy the rest of the source
+5. Run the build
+6. Set up the start command
+7. Handle multi-stage builds for smaller images
+
+Every team ends up with slightly different Containerfiles that do
+roughly the same thing. Nixpacks observes that *most builds follow
+the same pattern* and automates it.
+
+The trade-off: you lose fine-grained control over every image layer,
+but you gain a build system that works out of the box for the vast
+majority of projects.
+
+* The Phase Model
+
+Every Nixpacks build is a sequence of phases. Each phase is a named
+step with commands, dependencies, and caching rules.
+
+#+begin_example
+┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+│  setup  │───▶│ install │───▶│  build  │───▶│  start  │
+└─────────┘    └─────────┘    └─────────┘    └─────────┘
+ Nix/apt        npm ci         npm run        Container
+ packages                      build          entrypoint
+#+end_example
+
+** Setup
+
+Installs system-level packages via the Nix package manager. This is
+where Node.js itself gets installed, along with any extras you
+declare in =nixPkgs= or =aptPkgs=.
+
+Why Nix? Because Nix packages are reproducible --- the same package
+definition always produces the same binary. This makes builds
+deterministic, unlike apt where =apt-get install pandoc= might give
+you different versions on different days.
+
+** Install
+
+Installs application dependencies. For Node.js, this means =npm ci=.
+For Python, =pip install=. The phase is cached --- if =package.json=
+hasn't changed, Nixpacks skips the install entirely on rebuilds.
+
+** Build
+
+Runs your build command. For Node.js, Nixpacks reads the =build=
+script from =package.json= and runs it. If there's no build script,
+this phase is skipped.
+
+** Start
+
+Sets the container's entry point --- what runs when the container
+starts. For a server, this is =node server.js=. For a static site
+served by an external web server (like your Dokploy/Nginx setup),
+this phase is handled by the hosting platform.
+
+** Custom phases
+
+You can insert your own phases anywhere in the pipeline using
+=dependsOn=:
+
+#+begin_example
+┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+│  setup  │───▶│ install │───▶│ convert │───▶│  build  │───▶│  start  │
+└─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘
+                               Your custom
+                               org→md step
+#+end_example
+
+This is how the org-mode conversion pipeline will slot in during
+Phase 2 of the project.
+
+* The Provider System
+
+Nixpacks uses *providers* to detect project types. A provider is a
+set of rules that says: "if I see these files, I know how to build
+this project."
+
+** Detection logic
+
+Nixpacks scans the project root for marker files:
+
+#+begin_example
+Scan project root
+│
+├── Found package.json?
+│   └── Yes → Node.js provider
+│       ├── setup: install Node.js + npm
+│       ├── install: npm ci
+│       └── build: npm run build (if script exists)
+│
+├── Found requirements.txt?
+│   └── Yes → Python provider
+│
+├── Found go.mod?
+│   └── Yes → Go provider
+│
+├── Found Cargo.toml?
+│   └── Yes → Rust provider
+│
+└── No match → Error: cannot determine build
+#+end_example
+
+** What the Node.js provider infers
+
+For a project with this =package.json=:
+
+#+begin_src json
+{
+  "scripts": {
+    "build": "npx @11ty/eleventy",
+    "test": "node --test test/**/*.test.js"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^3.1.5"
+  }
+}
+#+end_src
+
+The Node.js provider infers:
+
+| Phase   | What it detects                                   |
+|---------+---------------------------------------------------|
+| setup   | Node.js version (from =.nvmrc=, =engines=, or latest LTS) |
+| install | =npm ci= (prefers =ci= over =install= for reproducibility) |
+| build   | =npm run build= (reads the =build= script)       |
+| start   | =npm run start= (reads the =start= script)       |
+
+** Multiple providers
+
+A project can match multiple providers. A Python/Node.js monorepo
+with both =package.json= and =requirements.txt= triggers both
+providers. Nixpacks merges their phases.
+
+* How =nixpacks.toml= Merges With Auto-detection
+
+This is the most important concept to understand. Your
+=nixpacks.toml= does not /replace/ auto-detection --- it /merges
+with/ it.
+
+#+begin_example
+Auto-detected plan          Your nixpacks.toml
+┌─────────────────┐        ┌─────────────────┐
+│ setup:          │        │ setup:          │
+│   nodejs, npm   │   +    │   pandoc        │
+│ install:        │        │                 │
+│   npm ci        │        │                 │
+│ build:          │        │                 │
+│   npm run build │        │                 │
+└─────────────────┘        └─────────────────┘
+         │                          │
+         └────────┬─────────────────┘
+                  ▼
+         Merged plan
+┌─────────────────────────┐
+│ setup:                  │
+│   nodejs, npm, pandoc   │
+│ install:                │
+│   npm ci                │
+│ build:                  │
+│   npm run build         │
+└─────────────────────────┘
+#+end_example
+
+This is why your two-line =nixpacks.toml= works:
+
+#+begin_src toml
+[phases.setup]
+nixPkgs = ["pandoc"]
+#+end_src
+
+You added Pandoc. Nixpacks added Node.js and npm. The install and
+build phases were entirely auto-detected. You only configured what
+the auto-detection couldn't infer.
+
+** When to override vs extend
+
+| Situation                  | Action                           | Result           |
+|----------------------------+----------------------------------+------------------|
+| Need extra system package  | Add =nixPkgs=                    | Merges with auto |
+| Need different build cmd   | Set =cmds= in =[phases.build]=   | Replaces auto    |
+| Need custom phase          | Add new =[phases.name]=          | Inserted via =dependsOn= |
+| Auto-detection is wrong    | Set =providers= explicitly       | Overrides auto   |
+
+The key distinction: *adding fields extends, setting =cmds=
+replaces*. If you set =cmds= on a phase, you own that phase entirely.
+
+* The Build Image vs the Run Image
+
+Nixpacks produces a multi-layer OCI image. The build happens in a
+large image (with Nix, compilers, build tools). The final runtime
+image can be smaller.
+
+#+begin_example
+Build stage                    Runtime stage
+┌─────────────────────┐       ┌──────────────────┐
+│ Nix + Node.js       │       │ Node.js          │
+│ npm + Pandoc        │──────▶│ Built output      │
+│ Source code         │       │ node_modules     │
+│ node_modules        │       │                  │
+│ Build output        │       │ (no Nix, no src) │
+└─────────────────────┘       └──────────────────┘
+      ~800MB                       ~200MB
+#+end_example
+
+For static sites like urban-doodle, the runtime stage is even
+simpler: just the =_site/= directory served by Nginx. Dokploy
+handles this separation --- the Nixpacks build produces the static
+output, and Dokploy serves it with an Nginx container.
+
+* Trade-offs and Alternatives
+
+** Nixpacks vs Containerfile
+
+| Aspect          | Nixpacks                       | Containerfile                |
+|-----------------+--------------------------------+------------------------------|
+| Setup effort    | Near zero                      | Manual, per-project          |
+| Flexibility     | Good for 90% of cases          | Total control                |
+| Reproducibility | Nix-based, highly reproducible | Depends on discipline        |
+| Learning curve  | Low                            | Medium                       |
+| Debugging       | Harder (generated layers)      | Easier (you wrote it)        |
+| Customisation   | Via TOML overrides             | Unlimited                    |
+
+** Nixpacks vs Buildpacks (Heroku/Cloud Native)
+
+Nixpacks was inspired by Buildpacks but uses Nix instead of apt for
+package management. The main advantage is reproducibility ---
+Nix packages are content-addressed and deterministic.
+
+** When to eject to a Containerfile
+
+- You need very precise control over layer ordering
+- You need multi-architecture builds (arm64/amd64)
+- Your build has unusual requirements Nixpacks can't express
+- You're optimising image size to the byte
+
+For urban-doodle, Nixpacks is the right choice. The build is
+straightforward (Node.js + Pandoc + static output), and the
+convenience of auto-detection outweighs the loss of fine-grained
+control.
+
+* Summary
+
+- Nixpacks auto-detects your project type from marker files
+  (=package.json=, =requirements.txt=, etc.)
+- Builds execute as ordered phases: setup \rarr{} install \rarr{}
+  build \rarr{} start
+- Your =nixpacks.toml= /merges with/ the auto-detected plan ---
+  you only configure what auto-detection can't infer
+- Adding =nixPkgs= extends the setup phase; setting =cmds= replaces
+  a phase entirely
+- Custom phases slot into the pipeline via =dependsOn=
+- The final image separates build dependencies from runtime, keeping
+  images lean
+
+* Further Reading
+
+- [[https://nixpacks.com/docs][Nixpacks Official Documentation]]
+- [[https://search.nixos.org/packages][Nix Package Search]] --- find
+  package names for =nixPkgs=
+- [[file:../reference/ref_nixpacks_toml.org][Reference: nixpacks.toml Configuration]]
+- [[file:../tutorials/tutorial_nixpacks_first_build.org][Tutorial: Your First Nixpacks Build]]
