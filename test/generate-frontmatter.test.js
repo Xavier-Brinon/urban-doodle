@@ -55,6 +55,24 @@ describe("generateFrontmatter", () => {
     assert.equal(generateFrontmatter({ title: null, date: undefined }), "");
   });
 
+  it("handles object values as nested YAML", () => {
+    const result = generateFrontmatter({
+      eleventyNavigation: { key: "Hello Page", parent: "Home", order: 1 },
+    });
+    assert.ok(result.includes("eleventyNavigation:"));
+    assert.ok(result.includes("  key: Hello Page"));
+    assert.ok(result.includes("  parent: Home"));
+    assert.ok(result.includes("  order: 1"));
+  });
+
+  it("omits null sub-values in objects", () => {
+    const result = generateFrontmatter({
+      eleventyNavigation: { key: "Hello Page", parent: null },
+    });
+    assert.ok(result.includes("  key: Hello Page"));
+    assert.ok(!result.includes("parent"));
+  });
+
   it("escapes values with special YAML characters", () => {
     const result = generateFrontmatter({
       permalink: '{{ libdocConfig.blogSlug }}/hello-post/index.html',

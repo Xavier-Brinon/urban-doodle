@@ -49,6 +49,13 @@ export function generateFrontmatter(metadata) {
       for (const item of value) {
         lines.push(`  - ${yamlValue(item)}`);
       }
+    } else if (typeof value === "object") {
+      lines.push(`${key}:`);
+      for (const [subKey, subVal] of Object.entries(value)) {
+        if (subVal != null) {
+          lines.push(`  ${subKey}: ${yamlValue(String(subVal))}`);
+        }
+      }
     } else {
       lines.push(`${key}: ${yamlValue(value)}`);
     }

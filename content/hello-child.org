@@ -1,0 +1,27 @@
+#+title: Hello Child!
+#+description: I am the page child of hello page
+#+layout: libdoc_page.liquid
+#+permalink: hello-page/hello-child/index.html
+:PROPERTIES:
+:tags: syntax-highlighting, blockquote
+:eleventynavigation_key: Hello Child
+:eleventynavigation_parent: Hello Page
+:END:
+
+#+begin_quote
+Howdy! I am the page child of hello page.
+
+--- *Child*
+#+end_quote
+
+#+begin_export html
+Let's go back to <a href="/hello-page/">hello page</a> or go to <a href="/hello-page/hello-child/hello-grandchild/">hello grandchild</a>.
+#+end_export
+
+#+begin_src markdown
+> Howdy! I am the page child of hello page.
+>
+> ― **Child**
+
+Let's go back to [hello page](/hello-page/) or go to [hello grandchild](/hello-page/hello-child/hello-grandchild/).
+#+end_src

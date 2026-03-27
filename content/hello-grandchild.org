@@ -1,0 +1,19 @@
+#+title: Hello Grandchild!
+#+description: I am the page child of hello child
+#+layout: libdoc_page.liquid
+#+permalink: hello-page/hello-child/hello-grandchild/index.html
+:PROPERTIES:
+:tags: blockquote
+:eleventynavigation_key: Hello Grandchild
+:eleventynavigation_parent: Hello Child
+:END:
+
+#+begin_quote
+Howdy! I am the page child of hello child.
+
+--- *Grandchild*
+#+end_quote
+
+#+begin_export html
+Let's go back to <a href="/hello-page/hello-child/">hello child</a>.
+#+end_export

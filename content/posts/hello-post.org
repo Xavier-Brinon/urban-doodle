@@ -1,0 +1,18 @@
+#+title: Hello Post!
+#+description: I am the first blog post
+#+date: [2025-05-15 Thu]
+:PROPERTIES:
+:tags: post, open-graph-image
+:author: Olivier 3lanc
+:ogimageurl: https://images.weserv.nl/?url=https://raw.githubusercontent.com/olivier3lanc/photographies/refs/heads/master/assets/paysages/hiver/foret_sapins_hiver_col_pre_img_4917_size_2560x1706.webp&w=1200&h=600&fit=cover&q=30&output=webp
+:END:
+
+#+begin_export html
+<img src="https://raw.githubusercontent.com/olivier3lanc/photographies/refs/heads/master/assets/paysages/hiver/foret_sapins_hiver_col_pre_img_4917_size_2560x1706.webp" alt="markdown image example">
+#+end_export
+
+Howdy! I am the first blog post of this project. To create content with LibDoc, you can use [[https://eleventy-libdoc.netlify.app/creating-content/markdown/][markdown]], [[https://eleventy-libdoc.netlify.app/creating-content/inline-html/][inline HTML]] and [[https://eleventy-libdoc.netlify.app/creating-content/widgets/][widgets]].
+
+Learn how to adjust [[https://eleventy-libdoc.netlify.app/creating-content/blogging/][blog settings]].
+
+The image above is also used as [[https://eleventy-libdoc.netlify.app/tags/open-graph-image/][Open Graph Image]].

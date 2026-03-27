@@ -35,6 +35,8 @@ function buildMetadata(keywords, properties) {
   if (keywords.title) metadata.title = keywords.title;
   if (keywords.description) metadata.description = keywords.description;
   if (keywords.date) metadata.date = parseOrgTimestamp(keywords.date);
+  if (keywords.permalink) metadata.permalink = keywords.permalink;
+  if (keywords.layout) metadata.layout = keywords.layout;
 
   if (properties.tags) metadata.tags = splitCommaSeparated(properties.tags);
   if (properties.author) metadata.author = properties.author;

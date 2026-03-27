@@ -198,15 +198,15 @@ original files are preserved verbatim.
 
 ** Acceptance criteria
 
-- [ ] All five demo =.md= files have org equivalents in =content/=
-- [ ] Posts are in =content/posts/=, other pages in =content/= root
-- [ ] Org files use =#+title=, =#+description=, =#+date= for standard metadata
-- [ ] Org files use =:PROPERTIES:= drawer for tags, author, ogImageUrl, eleventyNavigation
-- [ ] Org inactive timestamps used for dates
-- [ ] Liquid shortcodes from original files preserved verbatim
-- [ ] Original =.md= files removed from project root
-- [ ] =npm run build= produces =_site/= with same pages as before migration
-- [ ] All pages render correctly (navigation, breadcrumbs, blog index, tags)
+- [X] All five demo =.md= files have org equivalents in =content/=
+- [X] Posts are in =content/posts/=, other pages in =content/= root
+- [X] Org files use =#+title=, =#+description=, =#+date= for standard metadata
+- [X] Org files use =:PROPERTIES:= drawer for tags, author, ogImageUrl, eleventyNavigation
+- [X] Org inactive timestamps used for dates
+- [X] Liquid shortcodes from original files preserved verbatim
+- [X] Original =.md= files removed from project root
+- [X] =npm run build= produces =_site/= with same pages as before migration
+- [X] All pages render correctly (navigation, breadcrumbs, blog index, tags)
 
 * Phase 5: Profile Page support
 

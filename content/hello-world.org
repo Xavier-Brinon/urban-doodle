@@ -1,0 +1,26 @@
+#+title: Hello World!
+#+description: I am the home page of this project
+#+layout: libdoc_page.liquid
+#+permalink: index.html
+:PROPERTIES:
+:tags: widgets
+:END:
+
+{% alert 'It seems to be the beginning of a great documentation story!', 'success', 'Howdy!' %}
+
+** Let's start!
+
+#+begin_export html
+1. {% iconCard 'Configure', 'Start entering your own settings into `settings.json` at the root of the project. <br>[Configuration documentation](https://eleventy-libdoc.netlify.app/configuration/).', 'faders' %}
+2. {% iconCard 'Write', 'Easily write documentation with Markdown and <abbr title="Hyper Text Markup Language">HTML</abbr>. <br>[Create content](https://eleventy-libdoc.netlify.app/creating-content/).', 'pen' %}
+#+end_export
+
+** Get help
+
+LibDoc's website contains a comprehensive documentation about how to install, configure and :
+
+- [[https://eleventy-libdoc.netlify.app][LibDoc's homepage]] @@html:<br>@@The website containing LibDocs's presentation and comprehensive documentation.
+  - [[https://eleventy-libdoc.netlify.app/front-matter/][Front matter]] @@html:<br>@@Documentation of all front matter settings related to a LibDoc page.
+  - [[https://eleventy-libdoc.netlify.app/primary-navigation/][Primary navigation]] @@html:<br>@@Detailed features of LibDoc's primary navigation.
+  - [[https://eleventy-libdoc.netlify.app/configuration/seo/][SEO]] @@html:<br>@@How LibDoc's configuration and pages parameters are applied for Search Engine Optimization.
+  - [[https://eleventy-libdoc.netlify.app/configuration/credits/][Credits]] LibDoc could not work without these resources.

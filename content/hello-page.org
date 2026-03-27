@@ -1,0 +1,16 @@
+#+title: Hello Page!
+#+description: I am the first page linked into the primary navigation
+#+layout: libdoc_page.liquid
+#+permalink: hello-page/index.html
+:PROPERTIES:
+:tags: syntax-highlighting
+:eleventynavigation_key: Hello Page
+:END:
+
+#+begin_export html
+Howdy! I am the first page! Let's go to <a href="/hello-page/hello-child/">child page</a>.
+#+end_export
+
+#+begin_src markdown
+Howdy! I am the first page! Let's go to [child page](/hello-page/hello-child/ "Go to hello child").
+#+end_src
