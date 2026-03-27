@@ -8,6 +8,10 @@
     "productionUrl": "https://blog.bastidehub.xyz",
     "customLinks": [
         {
+            "url": "/profile/about/",
+            "text": "About"
+        },
+        {
             "url": "/feed.xml",
             "text": "Atom feed"
         },

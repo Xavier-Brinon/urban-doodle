@@ -231,12 +231,12 @@ Specifically:
 
 ** Acceptance criteria
 
-- [ ] =content/profile/= directory exists with =profile.json=
-- [ ] =profile.json= sets appropriate layout and permalink defaults
-- [ ] An example Profile Page org file exists in =content/profile/=
-- [ ] The org file converts to =.md= in =generated/profile/= via the pipeline
-- [ ] Eleventy builds the Profile Page into =_site/= at the correct URL
-- [ ] The page is linked from the header via =customLinks= in =settings.json=
-- [ ] The page renders correctly with LibDoc's layout
-- [ ] The Profile Page does not appear in the Sidebar navigation
-- [ ] The Profile Page does not appear in the blog index
+- [X] =content/profile/= directory exists with =profile.json=
+- [X] =profile.json= sets appropriate layout and permalink defaults
+- [X] An example Profile Page org file exists in =content/profile/=
+- [X] The org file converts to =.md= in =generated/profile/= via the pipeline
+- [X] Eleventy builds the Profile Page into =_site/= at the correct URL
+- [X] The page is linked from the header via =customLinks= in =settings.json=
+- [X] The page renders correctly with LibDoc's layout
+- [X] The Profile Page does not appear in the Sidebar navigation
+- [X] The Profile Page does not appear in the blog index

@@ -1,0 +1,4 @@
+{
+  "layout": "libdoc_page.liquid",
+  "permalink": "/profile/{{ page.fileSlug }}/"
+}

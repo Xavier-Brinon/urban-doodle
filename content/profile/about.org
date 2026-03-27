@@ -1,0 +1,17 @@
+#+title: About
+#+description: A bit about me and this site
+
+* Hello!
+
+I'm Xavier Brinon. This is my personal site where I write about
+software, woodworking, and whatever else catches my attention.
+
+* This site
+
+Built with [[https://www.11ty.dev/][Eleventy]] and
+[[https://eleventy-libdoc.netlify.app/][LibDoc]], authored in
+[[https://orgmode.org/][org-mode]], and deployed via Railpack on a
+self-hosted VPS running Dokploy.
+
+The source code lives on [[https://github.com/Xavier-Brinon/urban-doodle][GitHub]]
+and [[https://app.radicle.xyz/nodes/garden.bastidehub.xyz/rad:z3t3uRFQJ5FVuCDhXdQTwj1S5m6Rg][Radicle]].
