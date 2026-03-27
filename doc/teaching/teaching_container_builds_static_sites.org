@@ -72,7 +72,8 @@ The urban-doodle project uses two files to configure the entire build:
 #+begin_src json
 {
   "scripts": {
-    "build": "npx @11ty/eleventy"
+    "convert": "node scripts/convert-org.js",
+    "build": "npm run convert && npx @11ty/eleventy"
   },
   "dependencies": {
     "@11ty/eleventy": "^3.1.5"
@@ -100,10 +101,10 @@ Source code + railpack.json
 ┌─────────────────────────────────────────────────┐
 │                  BUILD STAGE                     │
 │                                                  │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐  │
-│  │ apt      │    │ install  │    │  build   │  │
-│  │ pandoc   │    │ npm ci   │───▶│ eleventy │  │
-│  └──────────┘    └──────────┘    └────┬─────┘  │
+│  ┌──────────┐  ┌──────────┐  ┌─────────┐  ┌──────────┐  │
+│  │ apt      │  │ install  │  │ convert │  │  build   │  │
+│  │ pandoc   │  │ npm ci   │─▶│ org→md  │─▶│ eleventy │  │
+│  └──────────┘  └──────────┘  └─────────┘  └────┬─────┘  │
 │                                       │         │
 │                                  _site/ output  │
 └───────────────────────────────────────┼─────────┘

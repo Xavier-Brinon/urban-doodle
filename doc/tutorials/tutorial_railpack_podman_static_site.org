@@ -167,8 +167,10 @@ You will notice Railpack:
 - Detected Node.js from =package.json=
 - Detected a static site and set output to =_site=
 - Installed Caddy as the web server
-- Ran =npm ci= \rarr{} =npm run build= \rarr{} =caddy fmt=
-- Built Pandoc into the build stage (from =railpack.json=)
+- Ran =npm ci= \rarr{} =npm run build= (which runs =npm run convert=
+  then =npx @11ty/eleventy=) \rarr{} =caddy fmt=
+- Built Pandoc into the build stage (from =railpack.json=) --- Pandoc
+  converts org-mode sources to Markdown during the convert step
 
 You configured none of this except the Pandoc dependency.
 

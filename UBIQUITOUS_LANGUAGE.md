@@ -16,7 +16,10 @@
 
 | Term | Definition | Aliases to avoid |
 |------|-----------|-----------------|
-| **Publication Date** | The date a Post was first published, set via the `date` frontmatter field. Required for all Posts. | Created date, post date |
+| **Org Source** | An org-mode file in `content/` — the author's source format. Uses `#+keyword` for metadata, `:PROPERTIES:` drawer for tags/author, and org markup for body content. | Org file, source file, input |
+| **Convert Step** | The `npm run convert` pipeline that transforms Org Sources into Generated Markdown via Pandoc. Runs before Eleventy in every build. | Conversion, preprocessing, transpile |
+| **Generated Markdown** | A `.md` file in `generated/` produced by the Convert Step. Contains YAML frontmatter and GFM body. Gitignored — never authored directly. | Output markdown, intermediate file |
+| **Publication Date** | The date a Post was first published, set via `#+date` in the Org Source (as an inactive timestamp). Required for all Posts. | Created date, post date |
 | **Revision Log** | An optional author-curated list of significant changes to a Post, displayed in the footer. Minor fixes (typos, formatting) are not logged. | Changelog, edit history, version history |
 
 ## Tagging and discovery
@@ -35,7 +38,7 @@
 | **Parent** | The Navigation Key of the Page one level up in the hierarchy, set via `eleventyNavigation.parent` | Container, section |
 | **Breadcrumb** | The ordered path from the home page to the current Page, derived from the navigation tree | Trail, path |
 | **Sidebar** | The persistent left-hand navigation menu showing the full Page hierarchy. Not used for Posts or Profile Pages. | Menu, nav, drawer |
-| **Custom Link** | An external navigation entry in the header, defined in Settings, pointing outside the site (GitHub, Radicle, etc.) | External link |
+| **Custom Link** | A navigation entry in the header, defined in Settings. Can point to internal pages (About) or external resources (GitHub, Radicle). | External link, header link |
 
 ## Theme and template layers
 
@@ -85,7 +88,7 @@
 - A **Sandbox** (Inline or File) is embedded within a Post or Page via a **Shortcode**.
 - The **Search Index** is generated from all Posts, Profile Pages, and Pages (excluding System Pages).
 - An **Open Graph Image** can be set per-Post, per-Profile Page, per-Page, or per-Tag (Tag-level overrides content-level).
-- **Custom Links** point exclusively to external resources.
+- **Custom Links** point to internal pages (Profile Pages) or external resources (GitHub, Radicle).
 
 ## Example dialogue
 
@@ -93,7 +96,7 @@
 > **Domain expert:** "A **Post** — it's dated content about a hobby. Tag it with something like `woodworking` so readers interested in that topic can find all your woodworking **Posts** via the **Tag Page**."
 >
 > **Dev:** "I also want to add my resume to the site."
-> **Domain expert:** "That's a **Profile Page**. It goes in the header navigation, not the blog feed. Add it as a Markdown file and link it via `customLinks` in **Settings**."
+> **Domain expert:** "That's a **Profile Page**. It goes in the header navigation, not the blog feed. Add it as an **Org Source** in `content/profile/` and link it via `customLinks` in **Settings**."
 >
 > **Dev:** "I updated an old post with new techniques I learned. How do I show that?"
 > **Domain expert:** "The **Publication Date** stays the same — that's when it was first published. Add a **Revision Log** entry in the frontmatter describing what changed. The `gitLastModifiedDate` **Filter** will automatically show the last-modified date."

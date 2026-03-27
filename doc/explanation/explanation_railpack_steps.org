@@ -169,8 +169,9 @@ You only configure what auto-detection cannot infer.
 
 This pipeline connects to other parts of the project:
 
-- The *org-mode conversion pipeline* (Phase 2) will add a custom step
-  between install and build: =npm run convert=
+- The *org-mode conversion pipeline* runs =npm run convert= before
+  Eleventy: org files in =content/= are converted to Markdown in
+  =generated/= via Pandoc, then Eleventy builds the static site
 - *Dokploy* on the VPS runs Railpack automatically on push --- the
   local Podman setup mirrors what happens in CI
 - The =RAILPACK_SPA_OUTPUT_DIR=_site= environment variable is set in
