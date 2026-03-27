@@ -1,0 +1,455 @@
+#+title: Container Builds for Static Sites: From Source to Serving
+#+author: Claude Code
+#+date: [2026-03-26 Thu]
+#+property: Example-Source railpack.json, package.json
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Introduction
+
+Building a static site into a container sounds simple: run
+=npm run build=, copy the output into an image with a web server,
+done. But the details --- multi-stage builds, rootless runtimes,
+build-time vs runtime dependencies, auto-detection --- are where
+things get interesting and where mistakes happen.
+
+This teaching doc uses the urban-doodle Eleventy blog as a real-world
+case study. Every example comes from actual project files.
+
+** The symptom
+
+You push code. The CI build succeeds. The site deploys. But the image
+is 800MB, takes 5 minutes to build, and includes Node.js, npm, and
+Pandoc in production --- none of which are needed to serve static
+HTML files.
+
+** The root cause (spoiler)
+
+Single-stage builds bundle everything into one image. Multi-stage
+builds with proper build/runtime separation solve this, but writing
+them by hand is tedious. Railpack automates it.
+
+* The Problem / Motivation
+
+Here is a naive Containerfile for an Eleventy site:
+
+#+begin_src dockerfile
+# Naive single-stage build
+FROM node:22
+WORKDIR /app
+COPY . .
+RUN npm ci
+RUN npm run build
+RUN apt-get update && apt-get install -y pandoc caddy
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+#+end_src
+
+What is wrong with this:
+
+1. The final image contains Node.js, npm, all =node_modules=, source
+   code, and Pandoc --- none needed at runtime
+2. Image size: ~800MB instead of ~50MB
+3. Every code change invalidates the =npm ci= cache (because =COPY .=
+   comes before =RUN npm ci=)
+4. Security surface: Node.js and npm in production means more CVEs to
+   patch
+
+* Real-World Example: Our Codebase
+
+The urban-doodle project uses two files to configure the entire build:
+
+=railpack.json=:
+
+#+begin_src json
+{
+  "$schema": "https://schema.railpack.com",
+  "buildAptPackages": ["pandoc"]
+}
+#+end_src
+
+=package.json= (relevant parts):
+
+#+begin_src json
+{
+  "scripts": {
+    "build": "npx @11ty/eleventy"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^3.1.5"
+  }
+}
+#+end_src
+
+From these two files, Railpack generates a multi-stage build that:
+- Installs Node.js 22, npm, and Pandoc in the build stage
+- Runs =npm ci= then =npm run build=
+- Copies only =_site/= and Caddy into the runtime image
+- Produces a ~50MB image
+
+The environment variable =RAILPACK_SPA_OUTPUT_DIR=_site= (set in
+Dokploy) tells Railpack this is a static site.
+
+* Deep Explanation
+
+** Visual representation
+
+#+begin_example
+Source code + railpack.json
+          │
+          ▼
+┌─────────────────────────────────────────────────┐
+│                  BUILD STAGE                     │
+│                                                  │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐  │
+│  │ apt      │    │ install  │    │  build   │  │
+│  │ pandoc   │    │ npm ci   │───▶│ eleventy │  │
+│  └──────────┘    └──────────┘    └────┬─────┘  │
+│                                       │         │
+│                                  _site/ output  │
+└───────────────────────────────────────┼─────────┘
+                                        │
+                    Only _site/ crosses  │
+                    the stage boundary   │
+                                        ▼
+┌─────────────────────────────────────────────────┐
+│                 RUNTIME STAGE                    │
+│                                                  │
+│  ┌──────────┐    ┌──────────┐                   │
+│  │  Caddy   │    │  _site/  │                   │
+│  │  server  │───▶│  files   │                   │
+│  └──────────┘    └──────────┘                   │
+│                                                  │
+│  Size: ~50MB   (no Node, no npm, no Pandoc)     │
+└─────────────────────────────────────────────────┘
+#+end_example
+
+** Step-by-step trace
+
+What happens when you run =railpack build .=:
+
+*** Step 1: Analysis
+
+Railpack scans the project root:
+- Finds =package.json= \rarr{} Node.js provider
+- Finds =RAILPACK_SPA_OUTPUT_DIR=_site= \rarr{} static site mode
+- Finds =railpack.json= \rarr{} reads =buildAptPackages: ["pandoc"]=
+- No =start= script \rarr{} confirms static site (Caddy will serve)
+
+*** Step 2: Build plan generation
+
+Railpack generates steps:
+
+| Step    | Commands         | Depends on | Output         |
+|---------+------------------+------------+----------------|
+| apt     | install pandoc   | ---        | build env      |
+| install | npm ci           | apt        | node_modules   |
+| build   | npm run build    | install    | _site/         |
+| caddy   | caddy fmt config | ---        | Caddyfile      |
+
+*** Step 3: BuildKit execution
+
+Railpack sends the plan to BuildKit. BuildKit:
+- Pulls the builder base image
+- Runs apt and install in parallel (they don't depend on each other)
+- Runs build after install completes
+- Copies only =_site/= into the runtime image
+- Adds Caddy and the generated Caddyfile
+
+*** Step 4: Image output
+
+BuildKit produces the final OCI image. Podman loads it into its
+local image store. The image contains only Caddy + static files.
+
+* Solutions and Patterns
+
+** Solution 1: Railpack auto-detection (recommended)
+
+*Before* (manual Containerfile):
+#+begin_src dockerfile
+# Multi-stage, manually written
+FROM node:22 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM caddy:2
+COPY --from=build /app/_site /srv
+COPY Caddyfile /etc/caddy/Caddyfile
+#+end_src
+
+*After* (Railpack):
+#+begin_src json
+{ "$schema": "https://schema.railpack.com", "buildAptPackages": ["pandoc"] }
+#+end_src
+
+*Pros:*
+- 3 lines of config vs 10+ lines of Containerfile
+- Auto-detects package manager, build command, and output directory
+- Caddy configuration generated automatically
+- Layer caching handled by BuildKit
+
+*Cons:*
+- Less control over exact layer ordering
+- Debugging build failures is harder (generated layers)
+- Not all frameworks auto-detected (Eleventy needs env var)
+
+** Decision tree
+
+#+begin_example
+Is your project a standard Node/Python/Go/Rust app?
+├── Yes → Use Railpack (auto-detection covers you)
+│   └── Need extra system packages?
+│       ├── Build-only → buildAptPackages
+│       └── Runtime too → deploy.aptPackages
+└── No → Write a Containerfile
+    └── Unusual base image, custom steps, or
+        multi-arch builds
+#+end_example
+
+* Common Anti-Patterns
+
+** Anti-pattern 1: Single-stage builds
+
+#+begin_src dockerfile
+# Single stage — everything in one image
+FROM node:22
+COPY . .
+RUN npm ci && npm run build
+CMD ["npx", "serve", "_site"]
+#+end_src
+
+*Fix:* Use Railpack or a multi-stage Containerfile. Never ship build
+tools to production.
+
+** Anti-pattern 2: =COPY .= before =npm ci=
+
+#+begin_src dockerfile
+COPY . .
+RUN npm ci
+#+end_src
+
+*Fix:* Copy =package.json= and lockfile first, run =npm ci=, then
+copy the rest. Railpack does this automatically.
+
+#+begin_src dockerfile
+COPY package*.json ./
+RUN npm ci
+COPY . .
+#+end_src
+
+** Anti-pattern 3: Build-only packages needed at runtime
+
+#+begin_src json
+{ "buildAptPackages": ["ffmpeg"] }
+#+end_src
+
+If =ffmpeg= is needed at runtime (e.g. processing uploads), this
+silently fails --- the binary exists during build but not when the
+container runs.
+
+*Fix:* Add to =deploy.aptPackages= for runtime dependencies:
+
+#+begin_src json
+{
+  "buildAptPackages": ["ffmpeg"],
+  "deploy": { "aptPackages": ["ffmpeg"] }
+}
+#+end_src
+
+** Anti-pattern 4: Docker daemon on dev machines
+
+Docker Desktop requires a daemon running as root. This is unnecessary
+for most development work.
+
+*Fix:* Use Podman. It is daemonless, rootless, and Docker-compatible.
+
+* Best Practices
+
+** 1. Let Railpack auto-detect as much as possible
+
+Good --- minimal config, auto-detection handles the rest:
+
+#+begin_src json
+{ "buildAptPackages": ["pandoc"] }
+#+end_src
+
+Bad --- overriding things Railpack already detects:
+
+#+begin_src json
+{
+  "provider": "node",
+  "packages": { "node": "22" },
+  "steps": {
+    "install": { "commands": ["npm ci"] },
+    "build": { "commands": ["npm run build"] }
+  }
+}
+#+end_src
+
+** 2. Separate build and runtime dependencies
+
+Good --- Pandoc only at build time:
+
+#+begin_src json
+{ "buildAptPackages": ["pandoc"] }
+#+end_src
+
+Bad --- Pandoc in runtime image (not needed for serving):
+
+#+begin_src json
+{ "deploy": { "aptPackages": ["pandoc"] } }
+#+end_src
+
+** 3. Use =...= to extend, not replace
+
+Good --- adds custom script after auto-detected build:
+
+#+begin_src json
+{ "steps": { "build": { "commands": ["...", "./post-build.sh"] } } }
+#+end_src
+
+Bad --- replaces entire build step, losing auto-detection:
+
+#+begin_src json
+{ "steps": { "build": { "commands": ["./custom-build.sh"] } } }
+#+end_src
+
+** 4. Use Podman for local development
+
+#+begin_src bash
+# Good: rootless, no daemon
+podman run --rm -p 8080:3000 urban-doodle
+#+end_src
+
+** 5. Set output dir for non-standard static sites
+
+Railpack auto-detects Vite, Astro, CRA, and Angular. For Eleventy
+and other generators, set the env var explicitly.
+
+* Practice Exercises
+
+** Exercise 1: Identify the build/runtime boundary
+
+Given this =railpack.json=, which packages are in the final image?
+
+#+begin_src json
+{
+  "buildAptPackages": ["pandoc", "imagemagick"],
+  "deploy": {
+    "aptPackages": ["ffmpeg"]
+  }
+}
+#+end_src
+
+:SOLUTION:
+Only =ffmpeg= is in the final image.
+
+=pandoc= and =imagemagick= are in =buildAptPackages= --- they are
+available during build but discarded from the runtime image.
+
+=ffmpeg= is in =deploy.aptPackages= --- it persists in the final
+image.
+:END:
+
+** Exercise 2: Fix the caching problem
+
+This Containerfile has poor cache behaviour. What is wrong and how
+would you fix it?
+
+#+begin_src dockerfile
+FROM node:22
+COPY . .
+RUN npm ci
+RUN npm run build
+#+end_src
+
+:SOLUTION:
+*Problem:* =COPY .= copies everything (including source code) before
+=npm ci=. Any source code change invalidates the npm cache layer.
+
+*Fixed:*
+
+#+begin_src dockerfile
+FROM node:22
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+#+end_src
+
+Copy only =package.json= and =package-lock.json= first. The =npm ci=
+layer is only invalidated when dependencies change, not when source
+code changes. Railpack handles this automatically.
+:END:
+
+** Exercise 3: Debug a missing runtime binary
+
+Your container starts but crashes with =sh: pandoc: not found= at
+runtime. Your =railpack.json= is:
+
+#+begin_src json
+{ "buildAptPackages": ["pandoc"] }
+#+end_src
+
+Why is Pandoc missing, and how do you fix it?
+
+:SOLUTION:
+*Problem:* =buildAptPackages= only installs during build. Pandoc is
+not in the runtime image.
+
+*Fixed:*
+
+#+begin_src json
+{
+  "buildAptPackages": ["pandoc"],
+  "deploy": { "aptPackages": ["pandoc"] }
+}
+#+end_src
+
+Add Pandoc to =deploy.aptPackages= to include it in the final image.
+Note: for the org pipeline, Pandoc only runs at build time, so
+=buildAptPackages= alone is correct. This exercise applies to tools
+that must run at runtime (e.g. FFmpeg for file processing).
+:END:
+
+* Summary
+
+** Key takeaways
+
+1. Multi-stage builds separate build dependencies from runtime ---
+   this is the single most important optimisation
+2. Railpack automates multi-stage builds by analysing your source
+   code; you only configure what it can't infer
+3. =buildAptPackages= is build-only; =deploy.aptPackages= is
+   runtime --- confusing them causes silent failures
+4. Podman is a rootless, daemonless alternative to Docker that works
+   with Railpack via the Docker-compatible socket
+5. Static sites get Caddy automatically; set
+   =RAILPACK_SPA_OUTPUT_DIR= for frameworks Railpack doesn't
+   auto-detect
+
+** Quick reference
+
+| Concept           | Wrong                       | Right                          |
+|-------------------+-----------------------------+--------------------------------|
+| Image size        | Single-stage (800MB)        | Multi-stage via Railpack (50MB) |
+| Build deps        | =deploy.aptPackages=        | =buildAptPackages=             |
+| Cache layers      | =COPY .= before =npm ci=   | Copy lockfile first            |
+| Runtime           | Docker daemon (root)        | Podman (rootless)              |
+| Config            | Override everything         | Let Railpack auto-detect       |
+| Static serving    | Manual Nginx setup          | Railpack + Caddy auto-detect   |
+
+* Related Documents
+
+- [[file:../tutorials/tutorial_railpack_podman_static_site.org][Tutorial: Build and Run a Static Site]]
+- [[file:../reference/ref_railpack_json.org][Reference: railpack.json Configuration]]
+- [[file:../reference/ref_podman_commands.org][Reference: Podman Commands]]
+
+* Further Reading
+
+- [[https://railpack.com][Railpack Documentation]]
+- [[https://podman.io/docs][Podman Documentation]]
+- [[https://caddyserver.com/docs][Caddy Documentation]]
+- [[https://docs.docker.com/build/buildkit/][BuildKit Documentation]]

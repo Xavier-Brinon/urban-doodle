@@ -13,3 +13,4 @@ generated/
 # MCPs and LLM
 .serena
 .claude
+.playwright-mcp

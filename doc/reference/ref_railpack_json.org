@@ -1,0 +1,123 @@
+#+title: railpack.json --- Reference
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Overview
+
+=railpack.json= is the configuration file for Railpack builds, placed
+at the project root. All sections are optional --- Railpack
+auto-detects defaults from the project source. A JSON schema is
+available at =https://schema.railpack.com=.
+
+* Root Fields
+
+| Field              | Type       | Description                                            |
+|--------------------+------------+--------------------------------------------------------|
+| =$schema=          | =string=   | JSON schema URL for editor autocompletion              |
+| =provider=         | =string=   | Explicit provider (optional, auto-detected by default) |
+| =buildAptPackages= | =string[]= | Apt packages installed during build only               |
+| =packages=         | =object=   | Map of package name to version (installed via mise)    |
+| =caches=           | =object=   | Map of cache name to cache definitions                 |
+| =secrets=          | =string[]= | Secrets available to build commands                    |
+| =steps=            | =object=   | Map of step names to step definitions                  |
+| =deploy=           | =object=   | Runtime image configuration                            |
+
+* Steps
+
+| Field           | Type       | Description                                      |
+|-----------------+------------+--------------------------------------------------|
+| =commands=      | =list=     | Commands to run in this step                     |
+| =inputs=        | =list=     | Layers from other steps, images, or local files  |
+| =secrets=       | =string[]= | Secrets available to this step                   |
+| =caches=        | =string[]= | Cache IDs available to commands                  |
+| =deployOutputs= | =list=     | Filters for what goes into the final image       |
+
+** Array extending
+
+=...= appends to auto-detected commands:
+
+#+begin_src json
+{ "steps": { "build": { "commands": ["...", "./custom.sh"] } } }
+#+end_src
+
+** Command formats
+
+- =string= --- shell command (e.g. ="npm install"=)
+- ={ "cmd": "...", "customName": "..." }= --- exec with display name
+- ={ "path": "node_modules/.bin" }= --- add to PATH
+- ={ "src": "a", "dest": "b" }= --- copy file
+
+* Deploy
+
+| Field          | Type       | Description                                    |
+|----------------+------------+------------------------------------------------|
+| =startCommand= | =string=   | Container start command                        |
+| =base=         | =object=   | Base layer for the runtime image               |
+| =aptPackages=  | =string[]= | Apt packages in the final image                |
+| =variables=    | =object=   | Runtime environment variables                  |
+| =paths=        | =string[]= | Paths prepended to =$PATH=                     |
+| =inputs=       | =list=     | Layers for the deploy step                     |
+
+** Build vs runtime packages
+
+| Field              | Installed during | In final image |
+|--------------------+------------------+----------------|
+| =buildAptPackages= | Build            | No             |
+| =deploy.aptPackages= | Deploy         | Yes            |
+
+* Layers
+
+** Step layer
+
+#+begin_src json
+{ "step": "install", "include": ["."], "exclude": ["node_modules"] }
+#+end_src
+
+** Image layer
+
+#+begin_src json
+{ "image": "macabees/neofetch", "include": ["/usr/bin/neofetch"] }
+#+end_src
+
+** Local layer
+
+#+begin_src json
+{ "local": true, "include": ["."] }
+#+end_src
+
+* Caches
+
+| Field       | Type     | Description                     |
+|-------------+----------+---------------------------------|
+| =directory= | =string= | Directory to cache              |
+| =type=      | =string= | =shared= (default) or =locked= |
+
+Caches are not persisted in the final image.
+
+* Environment Variables
+
+| Variable                  | Description                   |
+|---------------------------+-------------------------------|
+| =RAILPACK_SPA_OUTPUT_DIR= | Static site output directory  |
+| =RAILPACK_NODE_VERSION=   | Override Node.js version      |
+| =RAILPACK_NO_SPA=         | Disable static site detection |
+| =RAILPACK_PRUNE_DEPS=     | Remove dev dependencies       |
+| =RAILPACK_CONFIG_FILE=    | Path to config file           |
+
+* Full Example
+
+#+begin_src json
+{
+  "$schema": "https://schema.railpack.com",
+  "buildAptPackages": ["pandoc"]
+}
+#+end_src
+
+Complete config for the urban-doodle project.
+
+* See Also
+
+- [[file:../howto/howto_add_system_dependency.org][How to: Add a System Dependency]]
+- [[file:../explanation/explanation_railpack_steps.org][Explanation: How Railpack Steps Work]]

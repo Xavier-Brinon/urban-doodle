@@ -1,0 +1,236 @@
+#+title: Tutorial: Build and Run a Static Site with Railpack and Podman
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* What You Will Learn
+
+By the end of this tutorial, you will have:
+
+- Set up Podman as a rootless container runtime on macOS
+- Built an OCI image from an Eleventy project using Railpack
+- Observed how Railpack auto-detects your project and serves static
+  output via Caddy
+- Added a build-time system dependency (Pandoc)
+- Run the built image locally and verified the site works
+
+All examples use the urban-doodle Eleventy blog as the source.
+
+* Prerequisites
+
+- macOS with Homebrew installed
+- The urban-doodle repository cloned locally
+
+* Step 1: Install Podman
+
+#+begin_src bash
+  brew install podman
+#+end_src
+
+#+begin_example
+==> Downloading ...
+==> Installing podman
+🍺  /opt/homebrew/Cellar/podman/5.8.1
+#+end_example
+
+Initialise and start the Podman machine (a lightweight Linux VM that runs
+containers):
+
+#+begin_src bash
+  podman machine init
+  podman machine start
+#+end_src
+
+#+begin_example
+Machine init complete
+...
+Machine "podman-machine-default" started successfully
+#+end_example
+
+If the machine is already initialised or running, you will see a message saying
+so --- that is fine.
+
+Verify Podman works:
+
+#+name: podman version
+#+begin_src bash
+  podman --version
+#+end_src
+
+#+RESULTS: podman version
+: podman version 5.8.1
+
+* Step 2: Install Railpack
+
+Railpack is installed via mise (a polyglot tool version manager):
+
+#+begin_src bash
+  brew install mise
+  eval "$(mise activate zsh)"
+  mise install github:railwayapp/railpack@latest
+  mise use --global github:railwayapp/railpack
+#+end_src
+
+#+begin_example
+mise github:railwayapp/railpack@0.22.2 ✓ installed
+#+end_example
+
+Verify:
+
+#+name: railpack version
+#+begin_src bash
+  railpack --version
+#+end_src
+
+#+RESULTS: railpack version
+
+#+RESULTS:
+
+#+begin_example
+railpack version 0.22.2
+#+end_example
+
+* Step 3: Connect Railpack to Podman
+
+Railpack needs two things: a Docker-compatible socket (Podman
+provides this) and a BuildKit instance (for building image layers).
+
+Set the socket:
+
+#+begin_src bash
+export DOCKER_HOST="unix://$(podman machine inspect \
+  --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+#+end_src
+
+Start a BuildKit container:
+
+#+begin_src bash
+podman run --rm --privileged -d --name buildkit moby/buildkit
+export BUILDKIT_HOST="docker-container://buildkit"
+#+end_src
+
+#+begin_example
+...pulling moby/buildkit:latest...
+a1b2c3d4e5f6...
+#+end_example
+
+You will notice Podman pulls the BuildKit image and starts it as a
+background container. BuildKit is the engine that actually assembles
+the image layers.
+
+Add both exports to your =~/.zshrc= to make them permanent.
+
+* Step 4: Build the Image
+
+From the project root:
+
+#+begin_src bash
+railpack build .
+#+end_src
+
+#+begin_example
+╭─────────────────╮
+│ Railpack 0.22.2 │
+╰─────────────────╯
+
+  ↳ Detected Node
+  ↳ Using npm package manager
+  ↳ Deploying as static site
+  ↳ Output directory: _site
+
+  Packages
+  ──────────
+  node   │  22.22.2  │  railpack default (22)
+  caddy  │  2.11.2   │  railpack default (latest)
+
+  Steps
+  ──────────
+  ▸ install
+    $ npm ci
+
+  ▸ build
+    $ npm run build
+
+  ▸ caddy
+    $ caddy fmt --overwrite /Caddyfile
+
+  Deploy
+  ──────────
+    $ caddy run --config /Caddyfile --adapter caddyfile 2>&1
+
+...
+INFO Successfully built image
+#+end_example
+
+You will notice Railpack:
+- Detected Node.js from =package.json=
+- Detected a static site and set output to =_site=
+- Installed Caddy as the web server
+- Ran =npm ci= \rarr{} =npm run build= \rarr{} =caddy fmt=
+- Built Pandoc into the build stage (from =railpack.json=)
+
+You configured none of this except the Pandoc dependency.
+
+* Step 5: Verify the Image Exists
+
+#+begin_src bash
+podman images urban-doodle
+#+end_src
+
+#+begin_example
+REPOSITORY     TAG       IMAGE ID       CREATED         SIZE
+urban-doodle   latest    d5bf9f1f815a   1 minute ago    52MB
+#+end_example
+
+You will notice the image is ~52MB. The build stage (with Node.js,
+npm, Pandoc) was discarded. Only Caddy and the static =_site/= output
+remain.
+
+* Step 6: Run the Site Locally
+
+#+begin_src bash
+podman run --rm -p 8080:3000 urban-doodle
+#+end_src
+
+Open =http://localhost:8080= in your browser. You should see the
+Bastide Hub blog.
+
+Press =Ctrl+C= to stop the container.
+
+* Step 7: Inspect the Image Contents
+
+Look inside the image to see what Railpack included:
+
+#+begin_src bash
+podman run --rm --entrypoint sh urban-doodle -c "ls /app/_site/"
+#+end_src
+
+#+begin_example
+assets  core  favicon.png  feed.xml  hello-page  index.html
+posts  sandboxes  search  tags
+#+end_example
+
+This is the Eleventy build output --- the same files that
+=npm run build= produces locally.
+
+* What You Built
+
+You set up a complete container build pipeline:
+
+1. *Podman* --- a rootless container runtime (no Docker daemon needed)
+2. *BuildKit* --- the engine that assembles image layers
+3. *Railpack* --- the tool that analyses your source code and
+   generates the build plan
+4. *Caddy* --- the web server that serves the static output
+
+The entire configuration is three lines in =railpack.json= and one
+environment variable (=RAILPACK_SPA_OUTPUT_DIR=_site=). Everything
+else was auto-detected.
+
+* Next Steps
+
+- [[file:../howto/howto_add_system_dependency.org][How to: Add a System Dependency to a Railpack Build]]
+- [[file:../howto/howto_use_podman_instead_of_docker.org][How to: Use Podman Instead of Docker with Railpack]]
+- [[file:../explanation/explanation_railpack_steps.org][Explanation: How Railpack Steps and Auto-detection Work]]
+- [[file:../reference/ref_railpack_json.org][Reference: railpack.json Configuration]]

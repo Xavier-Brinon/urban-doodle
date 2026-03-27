@@ -1,0 +1,81 @@
+#+title: Podman Commands --- Reference
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Overview
+
+Podman is a daemonless, rootless container runtime. On macOS it runs
+containers inside a lightweight Linux VM called the "Podman machine."
+These are the commands used in the urban-doodle build pipeline.
+
+* Machine Management
+
+| Command                  | Description                          |
+|--------------------------+--------------------------------------|
+| =podman machine init=    | Create the Linux VM (first time only) |
+| =podman machine start=   | Start the VM                         |
+| =podman machine stop=    | Stop the VM                          |
+| =podman machine list=    | List machines and their status       |
+| =podman machine inspect= | Show machine details (socket path, etc.) |
+| =podman machine rm=      | Delete the VM                        |
+
+* Image Operations
+
+| Command                          | Description                      |
+|----------------------------------+----------------------------------|
+| =podman images=                  | List local images                |
+| =podman images NAME=             | Filter images by name            |
+| =podman rmi IMAGE=               | Remove an image                  |
+| =podman pull IMAGE=              | Pull an image from a registry    |
+| =podman image prune=             | Remove unused images             |
+
+* Container Operations
+
+| Command                                    | Description                        |
+|--------------------------------------------+------------------------------------|
+| =podman run --rm IMAGE=                    | Run and auto-remove on exit        |
+| =podman run --rm -p HOST:CONTAINER IMAGE=  | Run with port mapping              |
+| =podman run --rm --entrypoint sh IMAGE -c CMD= | Override entrypoint to run a command |
+| =podman run --rm --privileged -d --name N IMAGE= | Run privileged in background  |
+| =podman ps=                                | List running containers            |
+| =podman stop NAME=                         | Stop a running container           |
+| =podman rm NAME=                           | Remove a stopped container         |
+
+* Socket Path
+
+To get the Podman socket path for tools that expect a Docker socket:
+
+#+begin_src bash
+podman machine inspect \
+  --format '{{.ConnectionInfo.PodmanSocket.Path}}'
+#+end_src
+
+Set =DOCKER_HOST= to this path with the =unix://= prefix:
+
+#+begin_src bash
+export DOCKER_HOST="unix://$(podman machine inspect \
+  --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+#+end_src
+
+* Podman vs Docker CLI
+
+Most Docker commands work with Podman by replacing =docker= with
+=podman=:
+
+| Docker                     | Podman                     |
+|----------------------------+----------------------------|
+| =docker build .=           | =podman build .=           |
+| =docker run --rm image=    | =podman run --rm image=    |
+| =docker images=            | =podman images=            |
+| =docker ps=                | =podman ps=                |
+| =docker-compose up=        | =podman-compose up=        |
+
+Key difference: Podman has no daemon. Each command is a direct
+process, not a client-server call.
+
+* See Also
+
+- [[file:../howto/howto_use_podman_instead_of_docker.org][How to: Use Podman Instead of Docker]]
+- [[file:../explanation/explanation_railpack_steps.org][Explanation: How Railpack Steps Work]]

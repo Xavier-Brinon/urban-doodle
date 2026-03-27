@@ -1,0 +1,196 @@
+#+title: Container Builds for Static Sites: Railpack, Podman, and Caddy
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Introduction
+
+Building a static site into a container image involves three
+concerns: building the site, packaging it into an image, and serving
+it. Understanding how these concerns map to tools --- and why the
+separation matters --- is the key to a maintainable deploy pipeline.
+
+* Context and Background
+
+Traditionally, deploying a static site meant writing a Containerfile
+(Dockerfile) that installs Node.js, copies source code, runs the
+build, then sets up Nginx or Caddy to serve the output. Every team
+wrote slightly different versions of this same file.
+
+Railpack eliminates this by analysing source code and generating the
+build plan automatically. It is the successor to Nixpacks, built by
+Railway after years of production experience.
+
+* How It Works
+
+The urban-doodle deploy pipeline has four components:
+
+#+begin_example
+┌──────────┐     ┌───────────┐     ┌───────────┐     ┌──────────┐
+│  Podman  │────▶│ BuildKit  │────▶│ Railpack  │────▶│  Caddy   │
+│  runtime │     │  builder  │     │  analyser │     │  server  │
+└──────────┘     └───────────┘     └───────────┘     └──────────┘
+ Runs             Assembles         Decides what      Serves the
+ containers       image layers      to build          static files
+#+end_example
+
+** Podman: the container runtime
+
+Podman runs containers without a daemon. On macOS, it manages a
+lightweight Linux VM (the "Podman machine") where containers actually
+execute. It provides a Docker-compatible socket, so tools like
+Railpack and BuildKit work without modification.
+
+Why Podman over Docker? Podman is rootless by default --- no daemon
+running as root, no socket that grants root access. For a developer
+workstation, this is a meaningful security improvement.
+
+** BuildKit: the image builder
+
+BuildKit is the engine that assembles OCI image layers. It runs
+inside a Podman container and receives build instructions from
+Railpack. It handles layer caching, parallel step execution, and
+multi-stage builds.
+
+Railpack does not build images directly --- it generates a build plan
+and delegates to BuildKit. This separation means Railpack can evolve
+its analysis logic without changing how images are actually assembled.
+
+** Railpack: the analyser
+
+Railpack scans your source code, detects the project type, and
+generates a step-based build plan. For a Node.js static site, it:
+
+1. Detects =package.json= \rarr{} Node.js provider
+2. Detects =RAILPACK_SPA_OUTPUT_DIR= \rarr{} static site mode
+3. Plans: =npm ci= \rarr{} =npm run build= \rarr{} serve with Caddy
+4. Reads =railpack.json= for extras (e.g. =buildAptPackages=)
+5. Sends the plan to BuildKit
+
+The step model is a directed graph, not a linear pipeline:
+
+#+begin_example
+┌───────────┐     ┌───────────┐     ┌───────────┐
+│  install  │────▶│   build   │────▶│   caddy   │
+│  npm ci   │     │  eleventy │     │  fmt cfg  │
+└───────────┘     └───────────┘     └───────────┘
+#+end_example
+
+Steps run as soon as their inputs are ready. Independent steps can
+execute in parallel.
+
+** Caddy: the web server
+
+For static sites, Railpack installs Caddy into the runtime image and
+generates a Caddyfile that serves the output directory. Caddy is
+chosen over Nginx for its simpler configuration and automatic HTTPS
+support.
+
+** Build vs runtime separation
+
+Railpack produces a multi-stage image. Build dependencies (Node.js,
+npm, Pandoc) stay in the build stage. The runtime image contains only
+Caddy and the static files:
+
+#+begin_example
+Build stage (~400MB)              Runtime stage (~50MB)
+┌───────────────────────┐        ┌────────────────────┐
+│ Node.js 22            │        │ Caddy              │
+│ npm                   │        │ _site/ output      │
+│ Pandoc (apt)          │───────▶│                    │
+│ Source code           │        │ (no Node, no npm,  │
+│ node_modules          │        │  no Pandoc, no src)│
+│ _site/ output         │        │                    │
+└───────────────────────┘        └────────────────────┘
+#+end_example
+
+This is why =buildAptPackages= and =deploy.aptPackages= are separate
+fields. Pandoc converts org \rarr{} md at build time --- it has no
+reason to exist in the 50MB runtime image.
+
+* How =railpack.json= Extends Auto-detection
+
+Your config /extends/ the auto-detected plan, not replaces it:
+
+#+begin_example
+Auto-detected                    railpack.json
+┌─────────────────────┐         ┌────────────────────┐
+│ install: npm ci     │         │ buildAptPackages:  │
+│ build: npm run build│    +    │   ["pandoc"]       │
+│ caddy: fmt config   │         │                    │
+│ deploy: caddy run   │         │                    │
+└─────────────────────┘         └────────────────────┘
+         │                               │
+         └───────────┬───────────────────┘
+                     ▼
+          Merged build plan
+┌─────────────────────────────┐
+│ apt install pandoc          │
+│ install: npm ci             │
+│ build: npm run build        │
+│ caddy: fmt config           │
+│ deploy: caddy run           │
+└─────────────────────────────┘
+#+end_example
+
+You only configure what auto-detection cannot infer.
+
+* Trade-offs and Alternatives
+
+** Railpack vs writing a Containerfile
+
+| Aspect          | Railpack                       | Containerfile              |
+|-----------------+--------------------------------+----------------------------|
+| Setup effort    | Near zero                      | Manual, per-project        |
+| Flexibility     | Good for 90% of cases          | Total control              |
+| Reproducibility | mise + apt, deterministic      | Depends on discipline      |
+| Debugging       | Harder (generated layers)      | Easier (you wrote it)      |
+| Static sites    | Auto-detected, Caddy included  | Manual Nginx/Caddy setup   |
+
+** Podman vs Docker
+
+| Aspect      | Podman                     | Docker                     |
+|-------------+----------------------------+----------------------------|
+| Daemon      | None (daemonless)          | Requires dockerd           |
+| Root access | Rootless by default        | Daemon runs as root        |
+| CLI         | Docker-compatible          | Native                     |
+| macOS       | Runs in a lightweight VM   | Docker Desktop (licensed)  |
+| Compose     | =podman-compose=           | =docker compose= (built-in)|
+
+** When to eject to a Containerfile
+
+- You need precise control over every layer
+- You need multi-architecture builds
+- Railpack's auto-detection gets your project wrong
+- You need to optimise image size beyond what Railpack offers
+
+* Connections
+
+This pipeline connects to other parts of the project:
+
+- The *org-mode conversion pipeline* (Phase 2) will add a custom step
+  between install and build: =npm run convert=
+- *Dokploy* on the VPS runs Railpack automatically on push --- the
+  local Podman setup mirrors what happens in CI
+- The =RAILPACK_SPA_OUTPUT_DIR=_site= environment variable is set in
+  Dokploy, telling Railpack to treat this as a static site
+
+* Summary
+
+- *Podman* runs containers without a daemon (rootless, secure)
+- *BuildKit* assembles image layers (caching, parallelism)
+- *Railpack* analyses source code and generates the build plan
+  (auto-detection, =railpack.json= for overrides)
+- *Caddy* serves static files in the runtime image
+- Build dependencies stay in the build stage; runtime images are lean
+- You only configure what auto-detection can't infer
+
+* Further Reading
+
+- [[https://railpack.com][Railpack Documentation]]
+- [[https://podman.io/docs][Podman Documentation]]
+- [[https://caddyserver.com/docs][Caddy Documentation]]
+- [[https://github.com/moby/buildkit][BuildKit on GitHub]]
+- [[file:../reference/ref_railpack_json.org][Reference: railpack.json Configuration]]
+- [[file:../reference/ref_podman_commands.org][Reference: Podman Commands]]

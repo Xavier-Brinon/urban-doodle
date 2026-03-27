@@ -1,0 +1,78 @@
+#+title: How to Use Podman Instead of Docker with Railpack
+#+author: Xavier Brinon
+#+date: [2026-03-26 Thu]
+#+startup: indent
+#+options: toc:t num:t ^:{}
+
+* Goal
+
+Configure Railpack and BuildKit to use Podman as the container
+runtime instead of Docker.
+
+* Prerequisites
+
+- Podman installed (=brew install podman= on macOS)
+- Railpack installed via mise
+
+* Steps
+
+** Start the Podman machine
+
+#+begin_src bash
+podman machine start
+#+end_src
+
+** Point Railpack at Podman's socket
+
+#+begin_src bash
+export DOCKER_HOST="unix://$(podman machine inspect \
+  --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+#+end_src
+
+** Start BuildKit via Podman
+
+#+begin_src bash
+podman run --rm --privileged -d --name buildkit moby/buildkit
+export BUILDKIT_HOST="docker-container://buildkit"
+#+end_src
+
+** Make it permanent
+
+Add to =~/.zshrc=:
+
+#+begin_src bash
+export DOCKER_HOST="unix://$(podman machine inspect \
+  --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+export BUILDKIT_HOST="docker-container://buildkit"
+#+end_src
+
+** Build with Railpack
+
+#+begin_src bash
+railpack build .
+#+end_src
+
+Railpack talks to Podman via the Docker-compatible socket. No
+flags or config changes needed.
+
+* Verification
+
+#+begin_src bash
+podman images
+#+end_src
+
+Your built image should appear in the list.
+
+* Troubleshooting
+
+| Problem                            | Solution                                          |
+|------------------------------------+---------------------------------------------------|
+| "Cannot connect to Docker daemon"  | Run =podman machine start= and re-export =DOCKER_HOST= |
+| "Cannot connect to BuildKit"       | Run the =podman run ... buildkit= command         |
+| BuildKit container keeps stopping  | Remove =--rm= flag to keep it between sessions   |
+| "permission denied" on socket      | Ensure Podman machine is running: =podman machine list= |
+
+* See Also
+
+- [[file:../explanation/explanation_railpack_steps.org][Explanation: How Railpack Steps Work]]
+- [[file:../reference/ref_podman_commands.org][Reference: Podman Commands]]

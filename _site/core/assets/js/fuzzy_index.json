@@ -38,5 +38,15 @@
             "url": "/",
             "title": "Hello World!",
             "description": "I am the home page of this project widgets"
+        },
+        {
+            "url": "/generated/test-section/second/",
+            "title": "Second Test Post",
+            "description": " "
+        },
+        {
+            "url": "/posts/hello-org-post/",
+            "title": "Hello from Org!",
+            "description": "First post authored in org-mode post post org-mode"
         }
 ]

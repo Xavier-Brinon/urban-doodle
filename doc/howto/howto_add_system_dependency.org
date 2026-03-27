@@ -1,4 +1,4 @@
-#+title: How to Add a System Dependency to a Nixpacks Build
+#+title: How to Add a System Dependency to a Railpack Build
 #+author: Xavier Brinon
 #+date: [2026-03-26 Thu]
 #+startup: indent
@@ -7,92 +7,89 @@
 * Goal
 
 Add a system-level package (e.g. Pandoc, FFmpeg, ImageMagick) to a
-Nixpacks build so it is available during the build phase and
-optionally in the final image.
+Railpack build so it is available during the build phase.
 
 * Prerequisites
 
-- A project with a =nixpacks.toml= file (or willingness to create one)
-- Knowledge of the Nix package name for the dependency (see Steps)
+- A project with a =railpack.json= file (or willingness to create one)
 
 * Steps
 
-** Find the Nix package name
+** Find the apt package name
 
-Search the [[https://search.nixos.org/packages][Nix package index]].
+Search [[https://packages.debian.org][Debian packages]] online. Common
+packages:
 
-Common mappings:
+| Tool        | Apt package name |
+|-------------+------------------|
+| Pandoc      | =pandoc=         |
+| FFmpeg      | =ffmpeg=         |
+| ImageMagick | =imagemagick=    |
+| Git         | =git=            |
+| curl        | =curl=           |
 
-| Tool         | Nix package name |
-|--------------+------------------|
-| Pandoc       | =pandoc=         |
-| FFmpeg       | =ffmpeg=         |
-| ImageMagick  | =imagemagick=    |
-| PostgreSQL   | =postgresql_16=  |
-| Redis        | =redis=          |
-| Python 3.11  | =python311=      |
-| Node.js 20   | =nodejs-20_x=    |
-| Git          | =git=            |
+** Add the package to =railpack.json=
 
-** Add the package to =nixpacks.toml=
-
-Create or edit =nixpacks.toml= at the project root:
-
-#+begin_src toml
-[phases.setup]
-nixPkgs = ["pandoc"]
+#+begin_src json
+{
+  "$schema": "https://schema.railpack.com",
+  "buildAptPackages": ["pandoc"]
+}
 #+end_src
 
 For multiple packages:
 
-#+begin_src toml
-[phases.setup]
-nixPkgs = ["pandoc", "ffmpeg", "imagemagick"]
+#+begin_src json
+{
+  "$schema": "https://schema.railpack.com",
+  "buildAptPackages": ["pandoc", "ffmpeg"]
+}
 #+end_src
 
-** If the package is not in Nix, use apt
+** If the package is needed at runtime too
 
-Some packages are easier to find via apt:
+=buildAptPackages= only installs during build. For the final image:
 
-#+begin_src toml
-[phases.setup]
-nixPkgs = ["pandoc"]
-aptPkgs = ["libvips-dev"]
+#+begin_src json
+{
+  "buildAptPackages": ["pandoc"],
+  "deploy": {
+    "aptPackages": ["pandoc"]
+  }
+}
 #+end_src
-
-=nixPkgs= and =aptPkgs= can be mixed in the same setup phase.
 
 ** Rebuild
 
 #+begin_src bash
-nixpacks build . --name my-app
+railpack build .
 #+end_src
-
-The setup phase will now include your package alongside
-auto-detected dependencies.
 
 * Verification
 
-Verify the package is available in the built image (Nixpacks
-delegates to Podman via the Docker-compatible socket):
+Check the build logs for the =install apt packages= step:
+
+#+begin_example
+#9 install apt packages: pandoc
+...
+#9 Setting up pandoc (2.17.1.1) ...
+#+end_example
+
+For runtime packages, verify inside the image:
 
 #+begin_src bash
-podman run --rm my-app pandoc --version
+podman run --rm --entrypoint sh my-app -c "pandoc --version"
 #+end_src
-
-Replace =pandoc --version= with the appropriate version command for
-your package.
 
 * Troubleshooting
 
-| Problem                        | Solution                                                   |
-|--------------------------------+------------------------------------------------------------|
-| Package name not found in Nix  | Search [[https://search.nixos.org/packages][Nix package index]] for the exact name |
-| Package installs but wrong ver | Pin the version: =nixPkgs = ["nodejs-20_x"]= instead of =nodejs= |
-| Package too large for image    | Consider a multi-stage approach with =onlyIncludeFiles=    |
-| Build works, runtime fails     | The package might need =nixLibraries= for shared libs      |
+| Problem                     | Solution                                             |
+|-----------------------------+------------------------------------------------------|
+| Package not found           | Check exact name at [[https://packages.debian.org][packages.debian.org]] |
+| Wrong version               | Railpack uses Debian Bookworm; version is fixed      |
+| In build but not runtime    | Add to =deploy.aptPackages= as well                  |
 
 * See Also
 
-- [[file:../reference/ref_nixpacks_toml.org][Reference: nixpacks.toml Configuration]]
-- [[file:../explanation/explanation_nixpacks_phases.org][Explanation: How Nixpacks Phases and Auto-detection Work]]
+- [[file:../reference/ref_railpack_json.org][Reference: railpack.json Configuration]]
+- [[file:../explanation/explanation_railpack_steps.org][Explanation: How Railpack Steps Work]]
