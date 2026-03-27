@@ -9,6 +9,9 @@
     "dev": "npm run convert && npx @11ty/eleventy --serve",
     "test": "node --test test/**/*.test.js"
   },
+  "engines": {
+    "node": ">=24"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
