@@ -1,0 +1,58 @@
+#+title: Shortcode Test Page
+#+description: Tests all shortcode types and org blocks
+#+date: [2026-03-27 Fri]
+:PROPERTIES:
+:tags: test, widgets
+:author: Xavier Brinon
+:END:
+
+This page tests that Liquid shortcodes survive the org-to-Markdown
+conversion pipeline and that org blocks map to their Markdown
+equivalents.
+
+* Simple shortcodes
+
+{% alert 'It seems to be the beginning of a great documentation story!', 'success', 'Howdy!' %}
+
+{% iconCard 'Configure', 'Start entering your own settings into `settings.json` at the root of the project.', 'faders' %}
+
+{% iconCard 'Write', 'Easily write documentation with Markdown and HTML.', 'pen' %}
+
+* Paired shortcodes
+
+#+begin_export html
+{% sandbox %}
+<div class="test-sandbox">
+  <p>This is sandbox content with <strong>HTML</strong> inside.</p>
+</div>
+{% endsandbox %}
+#+end_export
+
+* Quote block
+
+#+begin_quote
+Measure twice, cut once. This is a famous woodworking proverb.
+#+end_quote
+
+* Source blocks
+
+#+begin_src python
+def hello():
+    print("world")
+#+end_src
+
+#+begin_src javascript
+const x = 42;
+console.log(x);
+#+end_src
+
+* Mixed content
+
+Some regular text with *emphasis* and =inline code= alongside
+shortcodes.
+
+{% alert 'This alert is mixed with regular content', 'warning', 'Watch out!' %}
+
+#+begin_quote
+Another quote block after an alert.
+#+end_quote

@@ -1,30 +1,29 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { convert } from "../scripts/convert-org.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
-const contentDir = join(root, "content");
-const generatedDir = join(root, "generated");
+const tmpContent = join(root, "test", ".tmp-content");
+const tmpGenerated = join(root, "test", ".tmp-generated");
 
-const readGenerated = (path) => readFileSync(join(generatedDir, path), "utf-8");
+const readGenerated = (path) => readFileSync(join(tmpGenerated, path), "utf-8");
 
 describe("pipeline orchestrator (convert-org.js)", () => {
-  const testPostDir = join(contentDir, "test-section");
-
-  before(() => {
+  before(async () => {
     // Clean up from any prior run
-    rmSync(testPostDir, { recursive: true, force: true });
-    rmSync(join(generatedDir, "test-section"), { recursive: true, force: true });
+    rmSync(tmpContent, { recursive: true, force: true });
+    rmSync(tmpGenerated, { recursive: true, force: true });
 
-    // Create a temporary test subdirectory with multiple org files and a data file
-    mkdirSync(testPostDir, { recursive: true });
+    // Create test content structure
+    mkdirSync(join(tmpContent, "posts"), { recursive: true });
+    mkdirSync(join(tmpContent, "test-section"), { recursive: true });
 
     writeFileSync(
-      join(testPostDir, "first.org"),
+      join(tmpContent, "test-section", "first.org"),
       `#+title: First Test Post
 #+description: Testing orchestrator
 #+date: [2026-01-15 Thu]
@@ -38,7 +37,7 @@ This is the first test post.
     );
 
     writeFileSync(
-      join(testPostDir, "second.org"),
+      join(tmpContent, "test-section", "second.org"),
       `#+title: Second Test Post
 #+date: [2026-02-20 Fri]
 
@@ -47,39 +46,43 @@ Second post with minimal metadata.
     );
 
     writeFileSync(
-      join(testPostDir, "test-section.json"),
+      join(tmpContent, "test-section", "test-section.json"),
       JSON.stringify({
         layout: "libdoc_page.liquid",
         permalink: "/test-section/{{ page.fileSlug }}/",
       }),
     );
 
-    // Run the conversion
-    execFileSync("npm", ["run", "convert"], {
-      cwd: root,
-      stdio: "pipe",
-      timeout: 30000,
-    });
+    writeFileSync(
+      join(tmpContent, "posts", "posts.json"),
+      JSON.stringify({
+        layout: "libdoc_page.liquid",
+        permalink: "/posts/{{ page.fileSlug }}/",
+        tags: ["post"],
+      }),
+    );
+
+    // Run the conversion using the exported function
+    await convert(tmpContent, tmpGenerated);
   });
 
   after(() => {
-    // Clean up test files
-    rmSync(testPostDir, { recursive: true, force: true });
-    rmSync(join(generatedDir, "test-section"), { recursive: true, force: true });
+    rmSync(tmpContent, { recursive: true, force: true });
+    rmSync(tmpGenerated, { recursive: true, force: true });
   });
 
   describe("directory mirroring", () => {
-    it("creates subdirectory in generated/", () => {
+    it("creates subdirectory in output", () => {
       assert.ok(
-        existsSync(join(generatedDir, "test-section")),
-        "generated/test-section/ should exist",
+        existsSync(join(tmpGenerated, "test-section")),
+        "test-section/ should exist in output",
       );
     });
 
-    it("mirrors posts/ subdirectory", () => {
+    it("creates posts/ subdirectory in output", () => {
       assert.ok(
-        existsSync(join(generatedDir, "posts")),
-        "generated/posts/ should exist",
+        existsSync(join(tmpGenerated, "posts")),
+        "posts/ should exist in output",
       );
     });
   });
@@ -87,14 +90,14 @@ Second post with minimal metadata.
   describe("multiple file conversion", () => {
     it("converts first.org to first.md", () => {
       assert.ok(
-        existsSync(join(generatedDir, "test-section", "first.md")),
+        existsSync(join(tmpGenerated, "test-section", "first.md")),
         "first.md should exist",
       );
     });
 
     it("converts second.org to second.md", () => {
       assert.ok(
-        existsSync(join(generatedDir, "test-section", "second.md")),
+        existsSync(join(tmpGenerated, "test-section", "second.md")),
         "second.md should exist",
       );
     });
@@ -123,9 +126,9 @@ Second post with minimal metadata.
   });
 
   describe("json data file copying", () => {
-    it("copies test-section.json to generated/", () => {
+    it("copies test-section.json to output", () => {
       assert.ok(
-        existsSync(join(generatedDir, "test-section", "test-section.json")),
+        existsSync(join(tmpGenerated, "test-section", "test-section.json")),
         "test-section.json should be copied",
       );
     });
@@ -136,9 +139,9 @@ Second post with minimal metadata.
       assert.equal(data.layout, "libdoc_page.liquid");
     });
 
-    it("copies posts.json to generated/posts/", () => {
+    it("copies posts.json to output", () => {
       assert.ok(
-        existsSync(join(generatedDir, "posts", "posts.json")),
+        existsSync(join(tmpGenerated, "posts", "posts.json")),
         "posts.json should be copied",
       );
     });

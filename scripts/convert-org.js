@@ -5,16 +5,13 @@
  * Mirrors directory structure and copies .json data files.
  */
 
-import { readdir, readFile, writeFile, mkdir, cp } from "node:fs/promises";
+import { readdir, readFile, writeFile, mkdir, cp, rm } from "node:fs/promises";
 import { join, relative, dirname, extname } from "node:path";
 
 import { parseOrgMetadata, parseOrgTimestamp, splitCommaSeparated } from "./lib/parse-org-metadata.js";
 import { generateFrontmatter } from "./lib/generate-frontmatter.js";
 import { convertOrgToMarkdown } from "./lib/pandoc-wrapper.js";
 import { assembleFile } from "./lib/assemble-file.js";
-
-const CONTENT_DIR = "content";
-const GENERATED_DIR = "generated";
 
 /** Recursively find all files matching an extension in a directory. */
 async function findFiles(dir, ext) {
@@ -54,55 +51,61 @@ function buildMetadata(keywords, properties) {
   return metadata;
 }
 
-/** Convert a single .org file to .md and write to generated/. */
-async function convertFile(orgPath) {
-  const orgContent = await readFile(orgPath, "utf-8");
-  const { keywords, properties, body } = parseOrgMetadata(orgContent);
-  const metadata = buildMetadata(keywords, properties);
-  const frontmatter = generateFrontmatter(metadata);
-  const markdown = body ? await convertOrgToMarkdown(body) : "";
-  const output = assembleFile(frontmatter, markdown);
+/**
+ * Convert all .org files in contentDir to .md in outputDir.
+ * Cleans outputDir first, mirrors directory structure, copies .json data files.
+ *
+ * @param {string} contentDir - Source directory containing .org files
+ * @param {string} outputDir - Destination directory for .md output
+ */
+export async function convert(contentDir, outputDir) {
+  // Clean output to avoid stale files from deleted sources
+  await rm(outputDir, { recursive: true, force: true });
 
-  const relPath = relative(CONTENT_DIR, orgPath).replace(/\.org$/, ".md");
-  const outPath = join(GENERATED_DIR, relPath);
-  await mkdir(dirname(outPath), { recursive: true });
-  await writeFile(outPath, output, "utf-8");
+  const orgFiles = await findFiles(contentDir, ".org");
 
-  console.log(`  ${orgPath} → ${outPath}`);
-}
+  if (orgFiles.length === 0) {
+    console.log("  No .org files found in " + contentDir);
+    return 0;
+  }
 
-/** Copy all .json data files from content/ to generated/, preserving structure. */
-async function copyJsonFiles() {
-  const jsonFiles = await findFiles(CONTENT_DIR, ".json");
+  for (const orgPath of orgFiles) {
+    const orgContent = await readFile(orgPath, "utf-8");
+    const { keywords, properties, body } = parseOrgMetadata(orgContent);
+    const metadata = buildMetadata(keywords, properties);
+    const frontmatter = generateFrontmatter(metadata);
+    const markdown = body ? await convertOrgToMarkdown(body) : "";
+    const output = assembleFile(frontmatter, markdown);
+
+    const relPath = relative(contentDir, orgPath).replace(/\.org$/, ".md");
+    const outPath = join(outputDir, relPath);
+    await mkdir(dirname(outPath), { recursive: true });
+    await writeFile(outPath, output, "utf-8");
+
+    console.log(`  ${orgPath} → ${outPath}`);
+  }
+
+  // Copy .json data files
+  const jsonFiles = await findFiles(contentDir, ".json");
   for (const jsonPath of jsonFiles) {
-    const relPath = relative(CONTENT_DIR, jsonPath);
-    const outPath = join(GENERATED_DIR, relPath);
+    const relPath = relative(contentDir, jsonPath);
+    const outPath = join(outputDir, relPath);
     await mkdir(dirname(outPath), { recursive: true });
     await cp(jsonPath, outPath);
     console.log(`  ${jsonPath} → ${outPath} (data file)`);
   }
+
+  return orgFiles.length;
 }
 
-async function main() {
+// CLI entry point
+const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"));
+if (isMain) {
   console.log("Converting org files...");
-
-  const orgFiles = await findFiles(CONTENT_DIR, ".org");
-
-  if (orgFiles.length === 0) {
-    console.log("  No .org files found in content/");
-    return;
-  }
-
-  for (const orgPath of orgFiles) {
-    await convertFile(orgPath);
-  }
-
-  await copyJsonFiles();
-
-  console.log(`Done. Converted ${orgFiles.length} file(s).`);
+  convert("content", "generated")
+    .then((count) => console.log(`Done. Converted ${count} file(s).`))
+    .catch((err) => {
+      console.error("Conversion failed:", err.message);
+      process.exit(1);
+    });
 }
-
-main().catch((err) => {
-  console.error("Conversion failed:", err.message);
-  process.exit(1);
-});

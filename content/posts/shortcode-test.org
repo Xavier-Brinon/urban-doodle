@@ -1,0 +1,22 @@
+#+title: Shortcode Test
+#+description: Verifies shortcodes render through the full pipeline
+#+date: [2026-03-27 Fri]
+:PROPERTIES:
+:tags: post, widgets
+:author: Xavier Brinon
+:END:
+
+{% alert 'This alert comes from an org file!', 'success', 'Org Pipeline' %}
+
+* Code example
+
+#+begin_src javascript
+const msg = "Hello from org-mode";
+console.log(msg);
+#+end_src
+
+* A quote
+
+#+begin_quote
+Org-mode is the most powerful plain text system ever created.
+#+end_quote

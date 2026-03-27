@@ -165,13 +165,13 @@ conversion.
 
 ** Acceptance criteria
 
-- [ ] Liquid tags (={% alert 'msg', 'success', 'Title' %}=) pass through unchanged
-- [ ] Paired Liquid tags (={% sandbox %}...{% endsandbox %}=) pass through with content intact
-- [ ] Org quote blocks (=#+begin_quote=) convert to Markdown blockquotes
-- [ ] Org source blocks (=#+begin_src language=) convert to fenced code blocks with language specifiers
-- [ ] Liquid tags inside org content do not get escaped or modified by Pandoc
-- [ ] An org file using all shortcode types produces valid HTML after full pipeline
-- [ ] Tests cover each shortcode type and block type with realistic content fixtures
+- [X] Liquid tags (={% alert 'msg', 'success', 'Title' %}=) pass through unchanged
+- [X] Paired Liquid tags (={% sandbox %}...{% endsandbox %}=) pass through with content intact
+- [X] Org quote blocks (=#+begin_quote=) convert to Markdown blockquotes
+- [X] Org source blocks (=#+begin_src language=) convert to fenced code blocks with language specifiers
+- [X] Liquid tags inside org content do not get escaped or modified by Pandoc
+- [X] An org file using all shortcode types produces valid HTML after full pipeline
+- [X] Tests cover each shortcode type and block type with realistic content fixtures
 
 * Phase 4: Migrate demo content from Markdown to org-mode
 
