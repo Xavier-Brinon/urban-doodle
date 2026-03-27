@@ -192,7 +192,7 @@ remain.
 * Step 6: Run the Site Locally
 
 #+begin_src bash
-podman run --rm -p 8080:3000 urban-doodle
+  podman run --rm -p 8080:3000 urban-doodle
 #+end_src
 
 Open =http://localhost:8080= in your browser. You should see the
