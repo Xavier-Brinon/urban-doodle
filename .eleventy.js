@@ -12,6 +12,9 @@ import libdocFunctions                      from "./_data/libdocFunctions.js";
 // END LibDoc imports
 
 export default function(eleventyConfig) {
+    // Use .eleventyignore only — .gitignore excludes generated/ which we need
+    eleventyConfig.setUseGitIgnore(false);
+
     // START PLUGINS
     eleventyConfig.addPlugin(EleventyHtmlBasePlugin);
     eleventyConfig.addPlugin(InputPathToUrlTransformPlugin);

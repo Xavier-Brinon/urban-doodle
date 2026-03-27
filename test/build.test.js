@@ -26,6 +26,7 @@ describe("eleventy build", () => {
       "feed.xml",
       "posts/index.html",
       "posts/hello-post/index.html",
+      "posts/hello-org-post/index.html",
       "hello-page/index.html",
       "hello-page/hello-child/index.html",
       "hello-page/hello-child/hello-grandchild/index.html",
@@ -80,6 +81,23 @@ describe("eleventy build", () => {
         html.includes("2025-05-15"),
         "should contain publication date",
       );
+    });
+  });
+
+  describe("org-sourced post", () => {
+    it("org post page has title", () => {
+      const html = readSite("posts/hello-org-post/index.html");
+      assert.ok(html.includes("Hello from Org!"), "should contain org post title");
+    });
+
+    it("org post appears in blog index", () => {
+      const html = readSite("posts/index.html");
+      assert.ok(html.includes("Hello from Org!"), "blog index should list org post");
+    });
+
+    it("org post has converted body content", () => {
+      const html = readSite("posts/hello-org-post/index.html");
+      assert.ok(html.includes("Why org-mode?"), "should contain heading from org body");
     });
   });
 

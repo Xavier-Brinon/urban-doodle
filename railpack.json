@@ -1,4 +1,8 @@
 {
   "$schema": "https://schema.railpack.com",
-  "buildAptPackages": ["pandoc"]
+  "buildAptPackages": ["pandoc"],
+  "deploy": {
+    "startCommand": "caddy run --config /app/Caddyfile --adapter caddyfile",
+    "aptPackages": ["caddy"]
+  }
 }

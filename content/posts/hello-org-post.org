@@ -1,0 +1,24 @@
+#+title: Hello from Org!
+#+description: First post authored in org-mode
+#+date: [2026-03-27 Fri]
+:PROPERTIES:
+:tags: post, org-mode
+:author: Xavier Brinon
+:END:
+
+This is the first blog post written in org-mode and converted to
+Markdown by the pipeline.
+
+* Why org-mode?
+
+Org-mode is a powerful authoring format native to Emacs. It supports:
+
+- Structured headings
+- Rich metadata via keywords and property drawers
+- Source code blocks with syntax highlighting
+- Links and images
+
+* Next steps
+
+The pipeline converts this =.org= file into =.md= with YAML
+frontmatter, then Eleventy builds it into HTML.

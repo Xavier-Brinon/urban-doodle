@@ -4,7 +4,9 @@
   "description": "An Eleventy starter project to craft slick and responsive documentation",
   "main": "index.js",
   "scripts": {
-    "build": "npx @11ty/eleventy",
+    "convert": "node scripts/convert-org.js",
+    "build": "npm run convert && npx @11ty/eleventy",
+    "dev": "npm run convert && npx @11ty/eleventy --serve",
     "test": "node --test test/**/*.test.js"
   },
   "keywords": [],

@@ -1,3 +1,8 @@
+node_modules/
+.cache/
+.serena/
+.claude/
+.playwright-mcp/
 README.md
 sandboxes/
 assets/
@@ -7,4 +12,6 @@ doc/
 plans/
 scripts/
 test/
+content/
+screenshots/
 # ___dummy_content/

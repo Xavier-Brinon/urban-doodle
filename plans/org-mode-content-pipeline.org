@@ -8,6 +8,22 @@
 
 Radicle issue =f0b8f752ce236b80f832eb714b083535d067ba6b=
 
+* Phase Review Procedure
+
+Every phase review must include a container-based visual check:
+
+1. Build the container image :: =railpack build .=
+2. Run the container :: =podman run --rm -p 8080:80 <image>=
+3. Take a screenshot :: Navigate to =http://localhost:8080= and capture
+   the page using Playwright
+4. Compare with baseline :: Compare the screenshot against the base
+   screenshot in =screenshots/baseline.png=
+5. Confirm no errors :: Check that the container starts without errors
+   and the site renders correctly
+
+The baseline screenshot should be updated whenever an intentional visual
+change is made to the site.
+
 * Architectural Decisions
 
 Durable decisions that apply across all phases:
@@ -114,17 +130,17 @@ Specifically:
 
 ** Acceptance criteria
 
-- [ ] =content/= directory exists with =posts/= subdirectory
-- [ ] =content/posts/posts.json= sets layout and permalink defaults
-- [ ] Pipeline orchestrator finds all =.org= files in =content/=
-- [ ] Pipeline orchestrator mirrors directory structure in =generated/=
-- [ ] Pipeline orchestrator copies =.json= data files to =generated/=
-- [ ] =generated/= is gitignored
-- [ ] =npm run convert= produces =.md= files in =generated/= from =.org= sources
-- [ ] =npm run build= runs conversion then Eleventy, producing =_site/=
-- [ ] =npm run dev= runs conversion then serves with Eleventy dev server
-- [ ] Eleventy processes =generated/= content correctly
-- [ ] Integration tests verify orchestrator handles multiple files and subdirectories
+- [X] =content/= directory exists with =posts/= subdirectory
+- [X] =content/posts/posts.json= sets layout and permalink defaults
+- [X] Pipeline orchestrator finds all =.org= files in =content/=
+- [X] Pipeline orchestrator mirrors directory structure in =generated/=
+- [X] Pipeline orchestrator copies =.json= data files to =generated/=
+- [X] =generated/= is gitignored
+- [X] =npm run convert= produces =.md= files in =generated/= from =.org= sources
+- [X] =npm run build= runs conversion then Eleventy, producing =_site/=
+- [X] =npm run dev= runs conversion then serves with Eleventy dev server
+- [X] Eleventy processes =generated/= content correctly
+- [X] Integration tests verify orchestrator handles multiple files and subdirectories
 
 * Phase 3: Liquid shortcode pass-through and org block conversion
 

@@ -7,6 +7,9 @@ _data/envlocal.json
 /assets/___dummy_content
 
 
+# Generated org→md output
+generated/
+
 # MCPs and LLM
 .serena
 .claude
