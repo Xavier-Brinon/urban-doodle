@@ -3,36 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello Page!</title>
+    <title>Shortcode Test</title>
     
 
-    <meta itemprop="name" content="Hello Page!">
-    <meta name="description" itemprop="description" content="I am the first page linked into the primary navigation">
-    <meta name="application-name" content="Hello Page!">
+    <meta itemprop="name" content="Shortcode Test">
+    <meta name="description" itemprop="description" content="Verifies shortcodes render through the full pipeline">
+    <meta name="application-name" content="Shortcode Test">
     <meta name="author" content="Xavier Brinon">
     <link rel="icon" type="image/png" href="/assets/myfavicon.png">
     
     <!-- Microsoft -->
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="msapplication-starturl" content="/hello-page/">
-    <meta name="msapplication-tooltip" content="Hello Page!">
+    <meta name="msapplication-starturl" content="/posts/shortcode-test/">
+    <meta name="msapplication-tooltip" content="Shortcode Test">
     
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="/hello-page/">
-    <meta property="og:title" content="Hello Page!">
-    <meta property="og:description" content="I am the first page linked into the primary navigation">
+    <meta property="og:url" content="/posts/shortcode-test/">
+    <meta property="og:title" content="Shortcode Test">
+    <meta property="og:description" content="Verifies shortcodes render through the full pipeline">
     <meta property="og:image" content="https://raw.githubusercontent.com/ita-design-system/ita-medias/refs/heads/main/ogimage-11ty-libdoc.png">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Hello Page!">
-    <meta name="twitter:description" content="I am the first page linked into the primary navigation">
-    <meta name="twitter:url" content="/hello-page/">
+    <meta name="twitter:title" content="Shortcode Test">
+    <meta name="twitter:description" content="Verifies shortcodes render through the full pipeline">
+    <meta name="twitter:url" content="/posts/shortcode-test/">
     <meta name="twitter:image" content="https://raw.githubusercontent.com/ita-design-system/ita-medias/refs/heads/main/ogimage-11ty-libdoc.png">
     
     <!-- iOS -->
-    <meta name="apple-mobile-web-app-title" content="Hello Page!">
+    <meta name="apple-mobile-web-app-title" content="Shortcode Test">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
     <!-- Android -->
@@ -251,7 +251,7 @@
                 </menu>
                 
                 
-                    <a href="/posts/" id="nav_primary_blog_link" class="d-flex ai-center | pt-5 pb-5 | fvs-wght-500 fs-4 td-none lsp-2 | c-neutral-900 bbwidth-1 bbstyle-dashed bcolor-neutral-500 cur-pointer">
+                    <a href="/posts/" id="nav_primary_blog_link" aria-current="page" class="d-flex ai-center | pt-5 pb-5 | fvs-wght-500 fs-4 td-none lsp-2 | c-neutral-900 bbwidth-1 bbstyle-dashed bcolor-neutral-500 cur-pointer">
                         
                         Blog
                     </a>
@@ -265,7 +265,7 @@
                 
 
                 <div id="nav_primary" class="pos-relative | fg-1 o-auto">
-                    <ol class="d-flex fd-column | m-0 pl-0 pt-3 pb-3 | ls-none"><li class="d-flex fw-wrap ai-center"><a href="/hello-page/" aria-current="page" class="d-flex ai-center fg-1 | pos-relative | w-100 pt-2 pb-2 pr-6 | fs-3 td-none lh-5 tws-balance fvs-wght-500 | c-neutral-900 nav_primary__anchor">Hello Page</a><ol class="d-flex fd-column fg-1 order-1 | m-0 pl-5 o-hidden | ls-none"><li class="d-flex fw-wrap ai-center"><a href="/hello-page/hello-child/" class="d-flex ai-center fg-1 | pos-relative | w-100 pt-2 pb-2 pr-6 | fs-3 td-none lh-5 tws-balance fvs-wght-500 | c-neutral-900 nav_primary__anchor">Hello Child</a><ol class="d-flex fd-column fg-1 order-1 | m-0 pl-5 o-hidden | ls-none"><li class="d-flex fw-wrap ai-center"><a href="/hello-page/hello-child/hello-grandchild/" class="d-flex ai-center fg-1 | pos-relative | w-100 pt-2 pb-2 pr-6 | fs-3 td-none lh-5 tws-balance fvs-wght-500 | c-neutral-900 nav_primary__anchor">Hello Grandchild</a></li></ol></li></ol></li></ol>
+                    <ol class="d-flex fd-column | m-0 pl-0 pt-3 pb-3 | ls-none"><li class="d-flex fw-wrap ai-center"><a href="/hello-page/" class="d-flex ai-center fg-1 | pos-relative | w-100 pt-2 pb-2 pr-6 | fs-3 td-none lh-5 tws-balance fvs-wght-500 | c-neutral-900 nav_primary__anchor">Hello Page</a><ol class="d-flex fd-column fg-1 order-1 | m-0 pl-5 o-hidden | ls-none"><li class="d-flex fw-wrap ai-center"><a href="/hello-page/hello-child/" class="d-flex ai-center fg-1 | pos-relative | w-100 pt-2 pb-2 pr-6 | fs-3 td-none lh-5 tws-balance fvs-wght-500 | c-neutral-900 nav_primary__anchor">Hello Child</a><ol class="d-flex fd-column fg-1 order-1 | m-0 pl-5 o-hidden | ls-none"><li class="d-flex fw-wrap ai-center"><a href="/hello-page/hello-child/hello-grandchild/" class="d-flex ai-center fg-1 | pos-relative | w-100 pt-2 pb-2 pr-6 | fs-3 td-none lh-5 tws-balance fvs-wght-500 | c-neutral-900 nav_primary__anchor">Hello Grandchild</a></li></ol></li></ol></li></ol>
                 </div>
             </nav>
         </div>
@@ -282,8 +282,14 @@
         <ul class="d-flex ai-center gap-2 | p-0 m-0 | fs-2 lh-3 | ls-none">
             
             
+                <li class="d-flex ai-baseline gap-2">
+                    <a href="/posts/" class="pt-2 pb-2 | fvs-wght-400 ws-nowrap">
+                        Blog
+                    </a> /
+                </li>
             
-            <li class="c-neutral-800 ws-nowrap">Hello Page!</li>
+            
+            <li class="c-neutral-800 ws-nowrap">Shortcode Test</li>
         </ul>
     </li>
 </ul>
@@ -335,11 +341,11 @@
                     </details>
                 </nav>
                 <h1 class="mt-3 mb-0 | lsp-5 fvs-wght-700 tws-balance " fs-10="md" fs-9="xs,sm">
-                    Hello Page!
+                    Shortcode Test
                 </h1>
                 
                     <p class="d-flex ai-center fw-wrap gap-2 | pt-5 pl-5 pb-5 m-0 | fvs-wght-400 tws-balance fs-7 lsp-3 lh-5 | blwidth-1 blstyle-dashed bcolor-neutral-500" pt-3="xs" pb-3="xs" fs-6="sm" fs-5="xs">
-                        I am the first page linked into the primary navigation
+                        Verifies shortcodes render through the full pipeline
                     </p>
                 
                 
@@ -347,13 +353,17 @@
                         <nav class="d-flex gap-2 fw-wrap | pl-5 pt-3 pb-5 | blwidth-1 blstyle-dashed bcolor-neutral-500">
                             
                                 
-                                    <a href="/tags/syntax-highlighting/" class="
+                            
+                                
+                            
+                                
+                                    <a href="/tags/widgets/" class="
                                         d-flex ai-center gap-1
                                         pl-2 pr-3 pt-1 pb-1
                                         fs-2 lsp-2 td-none
                                         bc-primary-200 bwidth-1 bstyle-solid bcolor-primary-400 brad-1 bradtl-3 bradbl-3">
                                         <span class="icon-tag-simple"></span>
-                                        <span class="page_tag">syntax-highlighting</span>
+                                        <span class="page_tag">widgets</span>
                                     </a>
                                 
                             
@@ -368,7 +378,7 @@
                                     
                                     
                                         
-                                        2025-09-01
+                                        2026-03-27
                                     
                                 </time>
                             </p>
@@ -387,6 +397,29 @@
                     </div>
                 
                 
+                    <details id="toc_main" open="">
+                        <summary class="d-flex ai-center | pt-5 pb-5 | fvs-wght-500 fs-3 | bwidth-1 bstyle-dashed bcolor-neutral-500 btwidth-0 brwidth-0 cur-pointer">
+                            <span class="pl-5 | bbwidth-1 bbstyle-dashed bcolor-neutral-500"></span>
+                            <span class="d-flex ai-center gap-1 | lsp-2">
+                                <span class="icon-minus-circle | fs-6 | c-primary-500"></span>
+                                <span class="icon-plus-circle | fs-6 | c-primary-500"></span>
+                                Table of content
+                            </span>
+                        </summary>
+                        
+                    <ol class="cgap-3em | m-0 pl-0 pb-5 o-auto | lh-1 | ls-none bwidth-1 bstyle-dashed bcolor-neutral-500 btwidth-0 brwidth-0" d-flex="xs,sm" fd-column="xs,sm" fw-wrap="xs,sm" columns-3="md" columns-2="sm" maxh-300px="sm" maxh-200px="xs">
+                        <li class="d-flex">
+                            <a href="#code-example" class="pl-5 pt-1 pb-1 | fs-4 lsp-3 lh-5 fvs-wght-400 wb-break-word | blwidth-1 blstyle-dashed bcolor-neutral-500">
+                                Code example
+                            </a>
+                        </li>
+                        <li class="d-flex">
+                            <a href="#a-quote" class="pl-5 pt-1 pb-1 | fs-4 lsp-3 lh-5 fvs-wght-400 wb-break-word | blwidth-1 blstyle-dashed bcolor-neutral-500">
+                                A quote
+                            </a>
+                        </li></ol>
+                    </details>
+                
             </header>
             <noscript>
                 
@@ -398,19 +431,34 @@
                 </aside>
             
             </noscript>
-            <p>Howdy! I am the first page! Let’s go to <a href="/hello-page/hello-child/" title="Go to hello child">child page</a>.</p>
-<pre><code class="language-markdown">Howdy! I am the first page! Let’s go to [child page](/hello-child.md &quot;Go to hello child&quot;).
+            <aside class="widget widget-alert">
+<div class="alert alert-success" data-title="Org Pipeline">
+This alert comes from an org file!
+</div>
+</aside>
+
+                        <h1 id="code-example" pl-9="xs,sm">
+                            <a href="#code-example" title="Code example" class="pos-absolute top-50 left-0 t-tY-50 | p-4 ml-1 | td-none | brad-4 bc-neutral-100 bwidth-1 bstyle-dashed bcolor-neutral-500 __hover-1 __soft-shadow" ml-3="xs,sm">
+                                <span class="icon-link-simple | pos-absolute top-50 left-50 t-tY-50 t-tX-50 | fs-4"></span>
+                            </a>
+                    Code example</h1>
+<pre><code class="language-javascript">const msg = &quot;Hello from org-mode&quot;;
+console.log(msg);
 </code></pre>
+
+                        <h1 id="a-quote" pl-9="xs,sm">
+                            <a href="#a-quote" title="A quote" class="pos-absolute top-50 left-0 t-tY-50 | p-4 ml-1 | td-none | brad-4 bc-neutral-100 bwidth-1 bstyle-dashed bcolor-neutral-500 __hover-1 __soft-shadow" ml-3="xs,sm">
+                                <span class="icon-link-simple | pos-absolute top-50 left-50 t-tY-50 t-tX-50 | fs-4"></span>
+                            </a>
+                    A quote</h1>
+<blockquote>
+<p>Org-mode is the most powerful plain text system ever created.</p>
+</blockquote>
 
             <footer class="minh-100vh">
                 <div class="pt-11 | blwidth-1 blstyle-dashed bcolor-neutral-500"></div>
                 <nav class="d-flex ai-center rgap-7 | blwidth-1 blstyle-dashed bcolor-neutral-500" fw-wrap="xs">
                     <div class="pl-5 | bbwidth-1 bbstyle-dashed bcolor-neutral-500"></div>
-                    
-                        <a href="https://github.com/Xavier-Brinon/urban-doodle/blob/main/hello-world.md/hello-page.md" target="_blank" class="btn btn-primary-light">
-                            <span class="icon-pencil-simple"></span>
-                            Edit this page
-                        </a>
                     
                     <div class="w-100" d-none="sm,md"></div>
                     <div class="pl-5 | bbwidth-1 bbstyle-dashed bcolor-neutral-500" w-100="sm,md"></div>

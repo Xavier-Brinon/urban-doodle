@@ -40,13 +40,13 @@
             "description": "I am the home page of this project widgets"
         },
         {
-            "url": "/generated/test-section/second/",
-            "title": "Second Test Post",
-            "description": " "
-        },
-        {
             "url": "/posts/hello-org-post/",
             "title": "Hello from Org!",
             "description": "First post authored in org-mode post post org-mode"
+        },
+        {
+            "url": "/posts/shortcode-test/",
+            "title": "Shortcode Test",
+            "description": "Verifies shortcodes render through the full pipeline post post widgets"
         }
 ]

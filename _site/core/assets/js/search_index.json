@@ -1,5 +1,10 @@
 [
             {
+                "url": "/tags/widgets",
+                "title": "Tag widgets",
+                "content": " widgets "
+            },
+            {
                 "url": "/tags/syntax-highlighting",
                 "title": "Tag syntax-highlighting",
                 "content": " syntax-highlighting "
@@ -19,11 +24,6 @@
                 "title": "Tag org-mode",
                 "content": " org-mode "
             },
-            {
-                "url": "/tags/widgets",
-                "title": "Tag widgets",
-                "content": " widgets "
-            },
         {
             "url": "/posts/hello-post/",
             "title": "Hello Post!",
@@ -37,12 +37,12 @@
         {
             "url": "/posts/",
             "title": "./core/libdoc_blog.liquid",
-            "content": "  2026-03-27 Xavier Brinon Hello from Org! First post authored in org-mode 2025-05-15 Olivier 3lanc Hello Post! I am the first blog post 1"
+            "content": "  2026-03-27 Xavier Brinon Hello from Org! First post authored in org-mode 2026-03-27 Xavier Brinon Shortcode Test Verifies shortcodes render through the full pipeline 2025-05-15 Olivier 3lanc Hello Post! I am the first blog post 1"
         },
         {
             "url": "/tags/",
             "title": "./core/libdoc_tags.liquid",
-            "content": "  syntax-highlighting 2 pages blockquote 2 pages open-graph-image 1 page org-mode 1 page widgets 1 page"
+            "content": "  widgets 2 pages syntax-highlighting 2 pages blockquote 2 pages open-graph-image 1 page org-mode 1 page"
         },
         {
             "url": "/hello-page/hello-child/",
@@ -65,13 +65,13 @@
             "content": "I am the home page of this project widgets It seems to be the beginning of a great documentation story!Let’s start!ConfigureStart entering your own settings into settings.json at the root of the project. Configuration documentation.WriteEasily write documentation with Markdown and HTML. Create content.Get helpLibDoc’s website contains a comprehensive documentation about how to install, configure and :LibDoc’s homepage The website containing LibDocs’s presentation and comprehensive documentation.Front matter Documentation of all front matter settings related to a LibDoc page.Primary navigation Detailed features of LibDoc’s primary navigation.SEO How LibDoc’s configuration and pages parameters are applied for Search Engine Optimization.Credits LibDoc could not work without these resources."
         },
         {
-            "url": "/generated/test-section/second/",
-            "title": "Second Test Post",
-            "content": "  Second post with minimal metadata."
-        },
-        {
             "url": "/posts/hello-org-post/",
             "title": "Hello from Org!",
             "content": "First post authored in org-mode post post org-mode This is the first blog post written in org-mode and converted to Markdown by the pipeline.Why org-mode?Org-mode is a powerful authoring format native to Emacs. It supports:Structured headingsRich metadata via keywords and property drawersSource code blocks with syntax highlightingLinks and imagesNext stepsThe pipeline converts this .org file into .md with YAML frontmatter, then Eleventy builds it into HTML."
+        },
+        {
+            "url": "/posts/shortcode-test/",
+            "title": "Shortcode Test",
+            "content": "Verifies shortcodes render through the full pipeline post post widgets This alert comes from an org file!Code exampleconst msg = &amp;quot;Hello from org-mode&amp;quot;;console.log(msg);A quoteOrg-mode is the most powerful plain text system ever created."
         }
 ]

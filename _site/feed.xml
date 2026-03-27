@@ -10,6 +10,30 @@
         <name>11ty LibDoc</name>
     </author>
         <entry>
+            <title>Shortcode Test</title>
+            <link href="https://blog.bastidehub.xyz/posts/shortcode-test/" />
+            <updated>2026-03-27T00:00:00Z</updated>
+            <id>https://blog.bastidehub.xyz/posts/shortcode-test/</id>
+            <author>
+                <name>Xavier Brinon</name>
+            </author>
+            <content type="html">
+                &lt;p&gt;&lt;/p&gt;&lt;aside class=&quot;widget widget-alert&quot;&gt;
+&lt;div class=&quot;alert alert-success&quot; data-title=&quot;Org Pipeline&quot;&gt;
+This alert comes from an org file!
+&lt;/div&gt;
+&lt;/aside&gt;&lt;p&gt;&lt;/p&gt;
+&lt;h1&gt;Code example&lt;/h1&gt;
+&lt;pre&gt;&lt;code class=&quot;language-javascript&quot;&gt;const msg = &amp;quot;Hello from org-mode&amp;quot;;
+console.log(msg);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h1&gt;A quote&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Org-mode is the most powerful plain text system ever created.&lt;/p&gt;
+&lt;/blockquote&gt;
+</content>
+        </entry>
+        <entry>
             <title>Hello from Org!</title>
             <link href="https://blog.bastidehub.xyz/posts/hello-org-post/" />
             <updated>2026-03-27T00:00:00Z</updated>
